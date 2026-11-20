@@ -33,7 +33,7 @@ export function OperationalOverviewPage() {
 
           {/* Big, obvious call-to-actions */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-            <Link to="/supply">
+            <Link to="/supply?action=new">
               <Button
                 size="md"
                 fullWidth
@@ -58,44 +58,53 @@ export function OperationalOverviewPage() {
 
         {/* Quick summary stats in plain language */}
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 border-t border-gray-100">
-          <div className="p-3.5 rounded-xl bg-[#f0fdf4] border border-[#bbf7d0] flex items-center justify-between">
+          <Link
+            to="/supply"
+            className="p-3.5 rounded-xl bg-[#f0fdf4] border border-[#bbf7d0] hover:border-[#15803d] transition-all flex items-center justify-between"
+          >
             <div>
               <p className="text-xs text-gray-600 font-semibold">Your Produce for Sale</p>
               <p className="text-xl sm:text-2xl font-extrabold text-[#15803d] tabular-nums mt-0.5">
                 4 Harvest Lots
               </p>
-              <p className="text-[11px] text-gray-500 font-medium">227.5 Metric Tonnes in depots</p>
+              <p className="text-[11px] text-gray-500 font-medium">227.5 Metric Tonnes ready →</p>
             </div>
             <div className="h-10 w-10 rounded-xl bg-[#dcfce7] flex items-center justify-center text-[#15803d]">
               <Package className="h-5 w-5" />
             </div>
-          </div>
+          </Link>
 
-          <div className="p-3.5 rounded-xl bg-[#fef3c7]/60 border border-[#fde68a] flex items-center justify-between">
+          <Link
+            to="/demand"
+            className="p-3.5 rounded-xl bg-[#fef3c7]/60 border border-[#fde68a] hover:border-[#d97706] transition-all flex items-center justify-between"
+          >
             <div>
               <p className="text-xs text-gray-600 font-semibold">Buyer Requests Looking</p>
               <p className="text-xl sm:text-2xl font-extrabold text-[#b45309] tabular-nums mt-0.5">
                 3 Open Tenders
               </p>
-              <p className="text-[11px] text-gray-500 font-medium">Factories looking for crops</p>
+              <p className="text-[11px] text-gray-500 font-medium">Factories looking for crops →</p>
             </div>
             <div className="h-10 w-10 rounded-xl bg-[#fef3c7] flex items-center justify-center text-[#b45309]">
               <ShoppingCart className="h-5 w-5" />
             </div>
-          </div>
+          </Link>
 
-          <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-between">
+          <Link
+            to="/matches"
+            className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 hover:border-blue-400 transition-all flex items-center justify-between"
+          >
             <div>
               <p className="text-xs text-gray-600 font-semibold">Matches for Your Crops</p>
               <p className="text-xl sm:text-2xl font-extrabold text-blue-800 tabular-nums mt-0.5">
                 3 Direct Buyers
               </p>
-              <p className="text-[11px] text-gray-500 font-medium">Ready for immediate deals</p>
+              <p className="text-[11px] text-gray-500 font-medium">Ready for immediate deals →</p>
             </div>
             <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700">
               <GitCompare className="h-5 w-5" />
             </div>
-          </div>
+          </Link>
         </div>
       </div>
 
@@ -159,7 +168,11 @@ export function OperationalOverviewPage() {
               </div>
 
               <div className="mt-4 pt-3 border-t border-gray-200">
-                <Link to="/inquiries">
+                <Link
+                  to={`/inquiries?match=${match.id}&buyer=${encodeURIComponent(
+                    match.demandTender.organizationName
+                  )}&crop=${encodeURIComponent(match.supplyBatch.commodityName)}`}
+                >
                   <Button fullWidth size="sm" icon={<MessageSquare className="h-4 w-4" />}>
                     Message Buyer
                   </Button>
@@ -215,7 +228,10 @@ export function OperationalOverviewPage() {
                 <p className="text-sm font-extrabold text-[#15803d] tabular-nums">
                   ₦{(batch.askingPricePerMT || 0).toLocaleString()} / Tonne
                 </p>
-                <Link to="/supply" className="text-[11px] font-bold text-gray-600 hover:text-[#15803d] mt-1 inline-block">
+                <Link
+                  to="/supply"
+                  className="text-[11px] font-bold text-[#15803d] hover:underline mt-1 inline-block"
+                >
                   Edit or View Details →
                 </Link>
               </div>

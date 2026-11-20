@@ -9,12 +9,21 @@ import {
 import { MatchScorePill } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { COMPATIBILITY_MATCHES } from '@/data/mock-data'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import type { CompatibilityMatch } from '@/types/matching'
 
 export function CompatibilityMatchesPage() {
+  const navigate = useNavigate()
   const [matches] = useState<CompatibilityMatch[]>(COMPATIBILITY_MATCHES)
   const [selectedMatch, setSelectedMatch] = useState<CompatibilityMatch>(matches[0])
+
+  const handleMessageBuyer = () => {
+    navigate(
+      `/inquiries?match=${selectedMatch.id}&buyer=${encodeURIComponent(
+        selectedMatch.demandTender.organizationName
+      )}&crop=${encodeURIComponent(selectedMatch.supplyBatch.commodityName)}`
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -173,11 +182,13 @@ export function CompatibilityMatchesPage() {
             <span className="text-xs text-gray-500">
               Ready to talk? Start a direct chat to agree on quantity and price.
             </span>
-            <Link to="/inquiries" className="w-full sm:w-auto">
-              <Button fullWidth icon={<MessageSquare className="h-4 w-4" />}>
-                Message {selectedMatch.demandTender.organizationName}
-              </Button>
-            </Link>
+            <Button
+              onClick={handleMessageBuyer}
+              icon={<MessageSquare className="h-4 w-4" />}
+              className="w-full sm:w-auto"
+            >
+              Message {selectedMatch.demandTender.organizationName}
+            </Button>
           </div>
         </div>
       </div>

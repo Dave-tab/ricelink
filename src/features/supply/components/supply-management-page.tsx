@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
   Plus,
   MapPin,
@@ -12,8 +13,12 @@ import { SUPPLY_BATCHES, COMMODITIES } from '@/data/mock-data'
 import type { SupplyBatch } from '@/types/supply'
 
 export function SupplyManagementPage() {
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [batches, setBatches] = useState<SupplyBatch[]>(SUPPLY_BATCHES)
   const [modalOpen, setModalOpen] = useState(false)
+  const [editingBatchId, setEditingBatchId] = useState<string | null>(null)
+  const [successNotice, setSuccessNotice] = useState<string | null>(null)
 
   // Form states
   const [formData, setFormData] = useState({
@@ -28,42 +33,113 @@ export function SupplyManagementPage() {
     askingPrice: 700000,
   })
 
-  // Selected crop details
+  // Open modal automatically if ?action=new is in the URL
+  useEffect(() => {
+    if (searchParams.get('action') === 'new') {
+      handleOpenNewModal()
+    }
+  }, [searchParams])
+
   const selectedCrop = COMMODITIES.find((c) => c.id === formData.commodityId) || COMMODITIES[0]
   const activeUnitConfig = selectedCrop.standardUnits.find((u) => u.unit === formData.unit)
   const calculatedMT = activeUnitConfig
     ? (formData.quantity * activeUnitConfig.kgConversion) / 1000
     : formData.quantity
 
-  const handleCreateListing = (e: React.FormEvent) => {
+  const handleOpenNewModal = () => {
+    setEditingBatchId(null)
+    setFormData({
+      commodityId: 'faro-44-rice',
+      variety: 'Faro 44 (Sipi)',
+      quantity: 500,
+      unit: '50kg Bag',
+      moistureContent: 12.8,
+      state: 'Kebbi',
+      lga: 'Argungu',
+      facilityName: 'Wurno Central Aggregation Shed',
+      askingPrice: 700000,
+    })
+    setModalOpen(true)
+  }
+
+  const handleEditBatch = (batch: SupplyBatch) => {
+    setEditingBatchId(batch.id)
+    setFormData({
+      commodityId: batch.commodityId,
+      variety: batch.variety,
+      quantity: batch.quantity,
+      unit: batch.unit,
+      moistureContent: batch.moistureContent,
+      state: batch.location.state,
+      lga: batch.location.lga,
+      facilityName: batch.location.facilityName,
+      askingPrice: batch.askingPricePerMT || 700000,
+    })
+    setModalOpen(true)
+  }
+
+  const handleSaveListing = (e: React.FormEvent) => {
     e.preventDefault()
-    const newBatch: SupplyBatch = {
-      id: `sb-${Date.now()}`,
-      batchCode: `LOT-${selectedCrop.code}-2026-${Math.floor(100 + Math.random() * 900)}`,
-      commodityId: formData.commodityId,
-      commodityName: selectedCrop.name,
-      variety: formData.variety,
-      quantity: Number(formData.quantity),
-      unit: formData.unit,
-      metricTonnes: calculatedMT,
-      packaging: `${formData.unit} Standard`,
-      grade: 'Grade 1 (Standard Quality)',
-      moistureContent: Number(formData.moistureContent),
-      location: {
-        facilityName: formData.facilityName,
-        state: formData.state,
-        lga: formData.lga,
-      },
-      ownerName: 'Musa Abdullahi',
-      organizationName: 'Argungu Rice Farmers Cooperative Union',
-      status: 'verified',
-      harvestDate: new Date().toISOString().split('T')[0],
-      createdAt: new Date().toISOString().split('T')[0],
-      askingPricePerMT: Number(formData.askingPrice),
+
+    if (editingBatchId) {
+      // Update existing batch
+      setBatches(
+        batches.map((b) => {
+          if (b.id === editingBatchId) {
+            return {
+              ...b,
+              commodityId: formData.commodityId,
+              commodityName: selectedCrop.name,
+              variety: formData.variety,
+              quantity: Number(formData.quantity),
+              unit: formData.unit,
+              metricTonnes: calculatedMT,
+              moistureContent: Number(formData.moistureContent),
+              location: {
+                ...b.location,
+                facilityName: formData.facilityName,
+                state: formData.state,
+                lga: formData.lga,
+              },
+              askingPricePerMT: Number(formData.askingPrice),
+            }
+          }
+          return b
+        })
+      )
+      setSuccessNotice(`Updated lot specifications successfully!`)
+    } else {
+      // Create new batch
+      const newBatch: SupplyBatch = {
+        id: `sb-${Date.now()}`,
+        batchCode: `LOT-${selectedCrop.code}-2026-${Math.floor(100 + Math.random() * 900)}`,
+        commodityId: formData.commodityId,
+        commodityName: selectedCrop.name,
+        variety: formData.variety,
+        quantity: Number(formData.quantity),
+        unit: formData.unit,
+        metricTonnes: calculatedMT,
+        packaging: `${formData.unit} Standard`,
+        grade: 'Grade 1 (Standard Quality)',
+        moistureContent: Number(formData.moistureContent),
+        location: {
+          facilityName: formData.facilityName,
+          state: formData.state,
+          lga: formData.lga,
+        },
+        ownerName: 'Musa Abdullahi',
+        organizationName: 'Argungu Rice Farmers Cooperative Union',
+        status: 'verified',
+        harvestDate: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString().split('T')[0],
+        askingPricePerMT: Number(formData.askingPrice),
+      }
+      setBatches([newBatch, ...batches])
+      setSuccessNotice(`New lot ${newBatch.batchCode} listed for sale!`)
     }
 
-    setBatches([newBatch, ...batches])
     setModalOpen(false)
+    setTimeout(() => setSuccessNotice(null), 5000)
   }
 
   return (
@@ -85,7 +161,7 @@ export function SupplyManagementPage() {
         </div>
 
         <Button
-          onClick={() => setModalOpen(true)}
+          onClick={handleOpenNewModal}
           icon={<Plus className="h-5 w-5" />}
           size="md"
           className="bg-[#15803d] hover:bg-[#166534]"
@@ -93,6 +169,22 @@ export function SupplyManagementPage() {
           + List New Crops for Sale
         </Button>
       </div>
+
+      {/* Success Notification Banner */}
+      {successNotice && (
+        <div className="p-4 rounded-xl bg-[#dcfce7] border border-[#bbf7d0] text-[#15803d] font-bold text-xs flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span>{successNotice}</span>
+          </div>
+          <button
+            onClick={() => setSuccessNotice(null)}
+            className="text-[#15803d] hover:text-[#166534] font-extrabold ml-3"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Produce Cards List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -114,7 +206,7 @@ export function SupplyManagementPage() {
               </h2>
               <p className="text-xs text-gray-600 font-medium">Variety: {batch.variety}</p>
 
-              {/* Big, Visible Quantity Block (Core Requirement 3.4 & 8) */}
+              {/* Big, Visible Quantity Block */}
               <div className="my-3 p-3.5 rounded-xl bg-[#f8faf7] border border-gray-200 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
@@ -134,7 +226,7 @@ export function SupplyManagementPage() {
                 </div>
               </div>
 
-              {/* Moisture & Storage Info */}
+              {/* Storage & Quality Info */}
               <div className="space-y-1.5 text-xs text-gray-600 pt-1">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
@@ -153,7 +245,7 @@ export function SupplyManagementPage() {
               </div>
             </div>
 
-            {/* Bottom: Price & Quick Action */}
+            {/* Price & Action Buttons */}
             <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
               <div>
                 <span className="text-[10px] uppercase font-bold text-gray-400">Asking Price</span>
@@ -163,10 +255,17 @@ export function SupplyManagementPage() {
               </div>
 
               <div className="flex gap-2">
-                <Button size="sm" variant="secondary">
-                  Edit
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => handleEditBatch(batch)}
+                >
+                  Edit Lot
                 </Button>
-                <Button size="sm">
+                <Button
+                  size="sm"
+                  onClick={() => navigate('/matches')}
+                >
                   View Buyers
                 </Button>
               </div>
@@ -175,14 +274,14 @@ export function SupplyManagementPage() {
         ))}
       </div>
 
-      {/* Simple, Easy 3-Step Modal to Sell Produce */}
+      {/* Simple 3-Step Listing / Editing Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-gray-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
               <div>
                 <h3 className="text-lg font-extrabold text-gray-900">
-                  List Your Crops for Sale
+                  {editingBatchId ? 'Edit Listed Produce Lot' : 'List Your Crops for Sale'}
                 </h3>
                 <p className="text-xs text-gray-500">
                   Fill in these simple details so buyers can contact you
@@ -190,13 +289,13 @@ export function SupplyManagementPage() {
               </div>
               <button
                 onClick={() => setModalOpen(false)}
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateListing} className="space-y-4 text-xs">
+            <form onSubmit={handleSaveListing} className="space-y-4 text-xs">
               {/* Step 1: Pick Crop */}
               <div>
                 <label className="block text-xs font-bold text-gray-800 mb-1.5">
@@ -284,7 +383,7 @@ export function SupplyManagementPage() {
                   </div>
                 </div>
 
-                {/* Clear auto-calculated total */}
+                {/* Auto-calculated total */}
                 <div className="mt-2 p-3 rounded-xl bg-[#dcfce7] border border-[#bbf7d0] flex items-center justify-between">
                   <span className="font-bold text-[#15803d] text-xs">Total in Metric Tonnes:</span>
                   <span className="text-base font-extrabold text-[#15803d] tabular-nums">
@@ -348,7 +447,7 @@ export function SupplyManagementPage() {
                   Cancel
                 </Button>
                 <Button type="submit" size="sm" className="bg-[#15803d] hover:bg-[#166534]">
-                  Confirm & Put on Sale
+                  {editingBatchId ? 'Save Changes' : 'Confirm & Put on Sale'}
                 </Button>
               </div>
             </form>

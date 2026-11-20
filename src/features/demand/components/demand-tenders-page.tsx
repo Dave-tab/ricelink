@@ -1,21 +1,24 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Plus,
   MapPin,
   Calendar,
   X,
   MessageSquare,
+  CheckCircle2,
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DEMAND_TENDERS, COMMODITIES } from '@/data/mock-data'
-import { Link } from 'react-router-dom'
 import type { DemandTender } from '@/types/demand'
 
 export function DemandTendersPage() {
+  const navigate = useNavigate()
   const [tenders, setTenders] = useState<DemandTender[]>(DEMAND_TENDERS)
   const [selectedCropFilter, setSelectedCropFilter] = useState('All')
   const [modalOpen, setModalOpen] = useState(false)
+  const [successNotice, setSuccessNotice] = useState<string | null>(null)
 
   // New buyer request form
   const [newTender, setNewTender] = useState({
@@ -62,7 +65,13 @@ export function DemandTendersPage() {
     }
 
     setTenders([tender, ...tenders])
+    setSuccessNotice(`Procurement order for ${tender.requiredQuantityMT} Tonnes of ${tender.commodityName} published!`)
     setModalOpen(false)
+    setTimeout(() => setSuccessNotice(null), 5000)
+  }
+
+  const handleContactBuyer = (tender: DemandTender) => {
+    navigate(`/inquiries?tender=${tender.id}&buyer=${encodeURIComponent(tender.organizationName)}&crop=${encodeURIComponent(tender.commodityName)}`)
   }
 
   return (
@@ -92,6 +101,22 @@ export function DemandTendersPage() {
           + Post What You Want to Buy
         </Button>
       </div>
+
+      {/* Success Notification Banner */}
+      {successNotice && (
+        <div className="p-4 rounded-xl bg-[#dcfce7] border border-[#bbf7d0] text-[#15803d] font-bold text-xs flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span>{successNotice}</span>
+          </div>
+          <button
+            onClick={() => setSuccessNotice(null)}
+            className="text-[#15803d] hover:text-[#166534] font-extrabold ml-3"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Simple Crop Filter Pills */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -171,11 +196,13 @@ export function DemandTendersPage() {
                 </p>
               </div>
 
-              <Link to="/inquiries">
-                <Button size="sm" icon={<MessageSquare className="h-4 w-4" />}>
-                  I Have This
-                </Button>
-              </Link>
+              <Button
+                size="sm"
+                icon={<MessageSquare className="h-4 w-4" />}
+                onClick={() => handleContactBuyer(tender)}
+              >
+                I Have This
+              </Button>
             </div>
           </div>
         ))}
@@ -196,7 +223,7 @@ export function DemandTendersPage() {
               </div>
               <button
                 onClick={() => setModalOpen(false)}
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>

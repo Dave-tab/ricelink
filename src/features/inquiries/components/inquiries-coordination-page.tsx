@@ -1,19 +1,70 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Send,
   ShieldCheck,
   Handshake,
+  CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { INQUIRY_THREADS } from '@/data/mock-data'
 import type { InquiryThread } from '@/types/inquiry'
 
 export function InquiriesCoordinationPage() {
+  const [searchParams] = useSearchParams()
   const [threads, setThreads] = useState<InquiryThread[]>(INQUIRY_THREADS)
   const [activeThreadId, setActiveThreadId] = useState<string>(threads[0].id)
   const [replyMessage, setReplyMessage] = useState('')
+  const [acceptedOfferNotice, setAcceptedOfferNotice] = useState<string | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Check if routed with specific buyer or tender context
+  useEffect(() => {
+    const buyerParam = searchParams.get('buyer')
+    const cropParam = searchParams.get('crop')
+
+    if (buyerParam) {
+      const existing = threads.find((t) =>
+        t.counterpartyOrg.toLowerCase().includes(buyerParam.toLowerCase())
+      )
+      if (existing) {
+        setActiveThreadId(existing.id)
+      } else {
+        // Create new dynamic thread with buyer
+        const newThread: InquiryThread = {
+          id: `inq-${Date.now()}`,
+          threadCode: `INQ-${cropParam ? cropParam.slice(0, 3).toUpperCase() : 'CRP'}-2026-${Math.floor(100 + Math.random() * 900)}`,
+          supplyBatchId: 'sb-001',
+          counterpartyName: 'Procurement Desk',
+          counterpartyOrg: buyerParam,
+          counterpartyRole: 'Buyer',
+          commoditySummary: cropParam || 'Produce Batch',
+          quantitySummary: '50 MT',
+          currentMilestone: 'inquiry_initiated',
+          lastActivity: 'Just now',
+          unreadCount: 0,
+          messages: [
+            {
+              id: `msg-${Date.now()}`,
+              senderName: buyerParam,
+              senderRole: 'Buyer',
+              timestamp: 'Just now',
+              message: `Hello! We are looking to source ${cropParam || 'agricultural commodities'}. Please let us know your available quantity and delivery schedule.`,
+              type: 'chat',
+            },
+          ],
+        }
+        setThreads([newThread, ...threads])
+        setActiveThreadId(newThread.id)
+      }
+    }
+  }, [searchParams])
 
   const activeThread = threads.find((t) => t.id === activeThreadId) || threads[0]
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [activeThread.messages])
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,6 +94,39 @@ export function InquiriesCoordinationPage() {
     setReplyMessage('')
   }
 
+  const handleAcceptTerms = (offerMessage: string) => {
+    const acceptanceMsg = {
+      id: `msg-${Date.now()}`,
+      senderName: 'Musa Abdullahi',
+      senderRole: 'You (Aggregator)',
+      timestamp: 'Just now',
+      message: `✅ Commercial Terms Accepted: We agree to supply as stated in "${offerMessage}". Please prepare intake weighbridge at your factory gate.`,
+      type: 'chat' as const,
+    }
+
+    const updatedThreads = threads.map((t) => {
+      if (t.id === activeThread.id) {
+        return {
+          ...t,
+          currentMilestone: 'contract_executed' as const,
+          lastActivity: 'Just now',
+          messages: [...t.messages, acceptanceMsg],
+        }
+      }
+      return t
+    })
+
+    setThreads(updatedThreads)
+    setAcceptedOfferNotice(`Deal agreed with ${activeThread.counterpartyOrg}! Contract status updated to Confirmed.`)
+    setTimeout(() => setAcceptedOfferNotice(null), 6000)
+  }
+
+  const handleCounterOffer = () => {
+    setReplyMessage(
+      `We reviewed your price offer. We can supply the full volume at ₦715,000 / Tonne with immediate dispatch from our Argungu depot. Kindly confirm if this works.`
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Top Banner */}
@@ -66,6 +150,22 @@ export function InquiriesCoordinationPage() {
           <span>Direct & Verified Channel</span>
         </div>
       </div>
+
+      {/* Deal Acceptance Toast Banner */}
+      {acceptedOfferNotice && (
+        <div className="p-4 rounded-xl bg-[#dcfce7] border border-[#bbf7d0] text-[#15803d] font-bold text-xs flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span>{acceptedOfferNotice}</span>
+          </div>
+          <button
+            onClick={() => setAcceptedOfferNotice(null)}
+            className="text-[#15803d] font-extrabold ml-3 hover:text-[#166534]"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Two-Pane Messenger Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[580px]">
@@ -162,10 +262,19 @@ export function InquiriesCoordinationPage() {
                       {msg.message}
                     </p>
                     <div className="mt-3 flex gap-2">
-                      <Button size="sm" className="bg-[#15803d] hover:bg-[#166534] text-xs">
+                      <Button
+                        size="sm"
+                        className="bg-[#15803d] hover:bg-[#166534] text-xs"
+                        onClick={() => handleAcceptTerms(msg.message)}
+                      >
                         Accept This Price
                       </Button>
-                      <Button size="sm" variant="secondary" className="text-xs">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="text-xs"
+                        onClick={handleCounterOffer}
+                      >
                         Suggest Different Price
                       </Button>
                     </div>
@@ -194,6 +303,7 @@ export function InquiriesCoordinationPage() {
                 </div>
               )
             })}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Message Input Box */}
