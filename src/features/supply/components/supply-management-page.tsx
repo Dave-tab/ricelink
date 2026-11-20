@@ -4,16 +4,16 @@ import {
   MapPin,
   Building2,
   X,
+  CheckCircle2,
 } from 'lucide-react'
-import { StatusBadge, CommodityMetricPill } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { SUPPLY_BATCHES, COMMODITIES } from '@/data/mock-data'
 import type { SupplyBatch } from '@/types/supply'
 
 export function SupplyManagementPage() {
   const [batches, setBatches] = useState<SupplyBatch[]>(SUPPLY_BATCHES)
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
 
   // Form states
   const [formData, setFormData] = useState({
@@ -21,40 +21,33 @@ export function SupplyManagementPage() {
     variety: 'Faro 44 (Sipi)',
     quantity: 500,
     unit: '50kg Bag',
-    packaging: '50kg PP Woven Bags (Sealed)',
-    grade: 'Grade 1 (Premium Milling)',
-    moistureContent: 12.5,
+    moistureContent: 12.8,
     state: 'Kebbi',
     lga: 'Argungu',
     facilityName: 'Wurno Central Aggregation Shed',
     askingPrice: 700000,
   })
 
-  // Dynamic conversion
-  const selectedCrop = COMMODITIES.find((c) => c.id === formData.commodityId)
-  const activeUnitConfig = selectedCrop?.standardUnits.find((u) => u.unit === formData.unit)
+  // Selected crop details
+  const selectedCrop = COMMODITIES.find((c) => c.id === formData.commodityId) || COMMODITIES[0]
+  const activeUnitConfig = selectedCrop.standardUnits.find((u) => u.unit === formData.unit)
   const calculatedMT = activeUnitConfig
     ? (formData.quantity * activeUnitConfig.kgConversion) / 1000
     : formData.quantity
 
-  const filteredBatches = batches.filter((b) => {
-    if (statusFilter === 'all') return true
-    return b.status === statusFilter
-  })
-
-  const handleCreateBatch = (e: React.FormEvent) => {
+  const handleCreateListing = (e: React.FormEvent) => {
     e.preventDefault()
     const newBatch: SupplyBatch = {
       id: `sb-${Date.now()}`,
-      batchCode: `LOT-${selectedCrop?.code || 'CRP'}-2026-${Math.floor(100 + Math.random() * 900)}`,
+      batchCode: `LOT-${selectedCrop.code}-2026-${Math.floor(100 + Math.random() * 900)}`,
       commodityId: formData.commodityId,
-      commodityName: selectedCrop?.name || 'Agricultural Produce',
+      commodityName: selectedCrop.name,
       variety: formData.variety,
       quantity: Number(formData.quantity),
       unit: formData.unit,
       metricTonnes: calculatedMT,
-      packaging: formData.packaging,
-      grade: formData.grade,
+      packaging: `${formData.unit} Standard`,
+      grade: 'Grade 1 (Standard Quality)',
       moistureContent: Number(formData.moistureContent),
       location: {
         facilityName: formData.facilityName,
@@ -70,146 +63,111 @@ export function SupplyManagementPage() {
     }
 
     setBatches([newBatch, ...batches])
-    setDrawerOpen(false)
+    setModalOpen(false)
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#e5e7eb] shadow-xs">
+      {/* Top Banner */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#143d2b]">
-              Supply Management & Harvest Batches
+            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">
+              Produce for Sale (Your Supply)
             </h1>
-            <span className="rounded bg-[#c0edd2] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#002113]">
-              Producer & Aggregator Desk
+            <span className="rounded-full bg-[#dcfce7] px-2.5 py-0.5 text-xs font-bold text-[#15803d]">
+              {batches.length} Listed Lots
             </span>
           </div>
           <p className="mt-1 text-xs sm:text-sm text-gray-600">
-            Publish consolidated produce lots, track physical depot inventories, and inspect certified laboratory parameters.
+            List crops you have harvested or have in storage so buyers, mills, and food companies across Nigeria can find you.
           </p>
         </div>
 
         <Button
-          onClick={() => setDrawerOpen(true)}
-          icon={<Plus className="h-4 w-4" />}
-          size="sm"
+          onClick={() => setModalOpen(true)}
+          icon={<Plus className="h-5 w-5" />}
+          size="md"
+          className="bg-[#15803d] hover:bg-[#166534]"
         >
-          Allocate New Harvest Batch
+          + List New Crops for Sale
         </Button>
       </div>
 
-      {/* Status Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-        {[
-          { id: 'all', label: 'All Batches' },
-          { id: 'verified', label: 'Verified Active' },
-          { id: 'in_aggregation', label: 'In Aggregation' },
-          { id: 'inspected', label: 'Lab Inspected' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setStatusFilter(tab.id)}
-            className={`rounded-full px-4 py-2 text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-              statusFilter === tab.id
-                ? 'bg-[#143d2b] text-white shadow-xs'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Batch Cards Grid */}
+      {/* Produce Cards List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredBatches.map((batch) => (
+        {batches.map((batch) => (
           <div
             key={batch.id}
-            className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-xs hover:border-[#143d2b] transition-all"
+            className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-xs hover:border-[#15803d] transition-all"
           >
             <div>
-              {/* Header row */}
+              {/* Header */}
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                  {batch.batchCode}
-                </span>
-                <StatusBadge status={batch.status} label={batch.status.replace('_', ' ').toUpperCase()} />
+                <span className="text-xs font-bold text-gray-500">{batch.batchCode}</span>
+                <StatusBadge status="verified" label="Active & Ready" />
               </div>
 
-              {/* Title & Variety */}
+              {/* Crop & Variety */}
               <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">
                 {batch.commodityName}
               </h2>
               <p className="text-xs text-gray-600 font-medium">Variety: {batch.variety}</p>
 
-              {/* Explicit Weight and Metric Conversion Banner */}
-              <div className="my-3 flex items-center justify-between p-3 rounded-xl bg-[#f8f9fa] border border-gray-200">
+              {/* Big, Visible Quantity Block (Core Requirement 3.4 & 8) */}
+              <div className="my-3 p-3.5 rounded-xl bg-[#f8faf7] border border-gray-200 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                    Allocated Volume
+                    Bags / Packages
                   </span>
-                  <div className="flex items-baseline gap-1 mt-0.5">
-                    <span className="text-xl font-extrabold text-gray-900 tabular-nums">
-                      {batch.quantity.toLocaleString()}
-                    </span>
-                    <span className="text-xs font-bold text-gray-600">{batch.unit}</span>
-                  </div>
+                  <p className="text-xl font-extrabold text-gray-900 tabular-nums">
+                    {batch.quantity.toLocaleString()} <span className="text-xs font-bold text-gray-600">{batch.unit}</span>
+                  </p>
                 </div>
-
                 <div className="text-right">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
-                    Explicit MT Basis
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#15803d]">
+                    Total Weight
                   </span>
-                  <div className="text-xl font-extrabold text-[#143d2b] tabular-nums mt-0.5">
-                    {batch.metricTonnes} MT
-                  </div>
+                  <p className="text-xl font-extrabold text-[#15803d] tabular-nums">
+                    {batch.metricTonnes} Tonnes
+                  </p>
                 </div>
               </div>
 
-              {/* Attribute badges */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <CommodityMetricPill
-                  volume={batch.metricTonnes}
-                  unit="MT"
-                  spec={batch.grade}
-                  moisture={batch.moistureContent}
-                />
-              </div>
-
-              {/* Location & Organization */}
-              <div className="space-y-1 text-xs text-gray-600 border-t border-gray-100 pt-3">
+              {/* Moisture & Storage Info */}
+              <div className="space-y-1.5 text-xs text-gray-600 pt-1">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                  <span className="truncate">
-                    {batch.location.facilityName}, {batch.location.lga}, {batch.location.state} State
+                  <span className="font-medium">
+                    {batch.location.facilityName}, {batch.location.state} State
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Building2 className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                  <span className="truncate font-medium text-gray-800">
-                    {batch.organizationName}
-                  </span>
+                  <span className="font-semibold text-gray-800">{batch.organizationName}</span>
+                </div>
+                <div className="flex items-center gap-2 text-emerald-800 font-semibold pt-1">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-[#15803d] shrink-0" />
+                  <span>Moisture Tested: {batch.moistureContent}% (Safe for storage & transport)</span>
                 </div>
               </div>
             </div>
 
-            {/* Bottom Actions */}
-            <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
+            {/* Bottom: Price & Quick Action */}
+            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
               <div>
-                <span className="text-[10px] text-gray-400 font-bold uppercase">Price Basis</span>
-                <p className="text-sm font-extrabold text-emerald-800 tabular-nums">
-                  ₦{(batch.askingPricePerMT || 0).toLocaleString()} / MT
+                <span className="text-[10px] uppercase font-bold text-gray-400">Asking Price</span>
+                <p className="text-sm font-extrabold text-[#15803d] tabular-nums">
+                  ₦{(batch.askingPricePerMT || 0).toLocaleString()} / Tonne
                 </p>
               </div>
 
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="text-xs">
-                  Lot Manifest
+                <Button size="sm" variant="secondary">
+                  Edit
                 </Button>
-                <Button size="sm" className="text-xs">
-                  Match Buyers
+                <Button size="sm">
+                  View Buyers
                 </Button>
               </div>
             </div>
@@ -217,65 +175,73 @@ export function SupplyManagementPage() {
         ))}
       </div>
 
-      {/* New Supply Allocation Modal / Drawer */}
-      {drawerOpen && (
+      {/* Simple, Easy 3-Step Modal to Sell Produce */}
+      {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-gray-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
               <div>
                 <h3 className="text-lg font-extrabold text-gray-900">
-                  Allocate New Harvest Batch
+                  List Your Crops for Sale
                 </h3>
                 <p className="text-xs text-gray-500">
-                  Register physical produce inventory for aggregation and matching
+                  Fill in these simple details so buyers can contact you
                 </p>
               </div>
               <button
-                onClick={() => setDrawerOpen(false)}
-                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"
+                onClick={() => setModalOpen(false)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateBatch} className="space-y-4 text-xs">
-              {/* Commodity Select */}
+            <form onSubmit={handleCreateListing} className="space-y-4 text-xs">
+              {/* Step 1: Pick Crop */}
               <div>
-                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Select Commodity
+                <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                  1. Which crop do you have?
                 </label>
-                <select
-                  value={formData.commodityId}
-                  onChange={(e) => {
-                    const c = COMMODITIES.find((item) => item.id === e.target.value)
-                    setFormData({
-                      ...formData,
-                      commodityId: e.target.value,
-                      variety: c?.varieties[0] || '',
-                      unit: c?.standardUnits[0].unit || '50kg Bag',
-                    })
-                  }}
-                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs font-semibold focus:border-[#143d2b] focus:outline-none"
-                >
-                  {COMMODITIES.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.code})
-                    </option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {COMMODITIES.map((c) => {
+                    const isSelected = formData.commodityId === c.id
+                    return (
+                      <button
+                        type="button"
+                        key={c.id}
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            commodityId: c.id,
+                            variety: c.varieties[0] || '',
+                            unit: c.standardUnits[0].unit,
+                          })
+                        }}
+                        className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-[#15803d] bg-[#dcfce7] text-[#15803d]'
+                            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <p className="truncate text-xs">{c.name}</p>
+                        <p className="text-[10px] font-semibold text-gray-500">{c.category}</p>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
-              {/* Variety */}
+              {/* Variety selection */}
               <div>
-                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Variety
+                <label className="block text-xs font-bold text-gray-800 mb-1">
+                  Variety / Seed Type
                 </label>
                 <select
                   value={formData.variety}
                   onChange={(e) => setFormData({ ...formData, variety: e.target.value })}
-                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#143d2b] focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs font-semibold focus:border-[#15803d] focus:outline-none"
                 >
-                  {selectedCrop?.varieties.map((v) => (
+                  {selectedCrop.varieties.map((v) => (
                     <option key={v} value={v}>
                       {v}
                     </option>
@@ -283,147 +249,106 @@ export function SupplyManagementPage() {
                 </select>
               </div>
 
-              {/* Quantity and Unit with Auto-Conversion */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs font-bold tabular-nums focus:border-[#143d2b] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    Unit of Measurement
-                  </label>
-                  <select
-                    value={formData.unit}
-                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#143d2b] focus:outline-none"
-                  >
-                    {selectedCrop?.standardUnits.map((u) => (
-                      <option key={u.unit} value={u.unit}>
-                        {u.unit} ({u.kgConversion} kg)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Dynamic MT Conversion Banner */}
-              <div className="p-3 rounded-xl bg-[#c0edd2]/40 border border-[#a5d0b7] flex items-center justify-between">
-                <span className="font-semibold text-gray-700">Calculated Metric Tonnes:</span>
-                <span className="text-base font-extrabold text-[#002717] tabular-nums">
-                  {calculatedMT.toFixed(2)} MT
-                </span>
-              </div>
-
-              {/* Moisture & Grade */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    Moisture Content (%)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    required
-                    value={formData.moistureContent}
-                    onChange={(e) =>
-                      setFormData({ ...formData, moistureContent: Number(e.target.value) })
-                    }
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs tabular-nums focus:border-[#143d2b] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    Quality Grade
-                  </label>
-                  <select
-                    value={formData.grade}
-                    onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#143d2b] focus:outline-none"
-                  >
-                    {selectedCrop?.grades.map((g) => (
-                      <option key={g.code} value={g.label}>
-                        {g.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Location */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    State
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#143d2b] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    LGA
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.lga}
-                    onChange={(e) => setFormData({ ...formData, lga: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#143d2b] focus:outline-none"
-                  />
-                </div>
-              </div>
-
+              {/* Step 2: Quantity & Bags */}
               <div>
-                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Depot / Facility Name
+                <label className="block text-xs font-bold text-gray-800 mb-1">
+                  2. How much do you have?
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.facilityName}
-                  onChange={(e) => setFormData({ ...formData, facilityName: e.target.value })}
-                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#143d2b] focus:outline-none"
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-[11px] text-gray-500 font-medium">Number of Bags / Units</span>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                      className="w-full mt-1 rounded-xl border border-gray-300 p-2.5 text-sm font-extrabold tabular-nums focus:border-[#15803d] focus:outline-none"
+                      placeholder="e.g. 500"
+                    />
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] text-gray-500 font-medium">Packaging Unit</span>
+                    <select
+                      value={formData.unit}
+                      onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                      className="w-full mt-1 rounded-xl border border-gray-300 p-2.5 text-xs font-semibold focus:border-[#15803d] focus:outline-none"
+                    >
+                      {selectedCrop.standardUnits.map((u) => (
+                        <option key={u.unit} value={u.unit}>
+                          {u.unit} ({u.kgConversion} kg)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Clear auto-calculated total */}
+                <div className="mt-2 p-3 rounded-xl bg-[#dcfce7] border border-[#bbf7d0] flex items-center justify-between">
+                  <span className="font-bold text-[#15803d] text-xs">Total in Metric Tonnes:</span>
+                  <span className="text-base font-extrabold text-[#15803d] tabular-nums">
+                    {calculatedMT.toFixed(2)} Tonnes (MT)
+                  </span>
+                </div>
+              </div>
+
+              {/* Step 3: Location and Price */}
+              <div>
+                <label className="block text-xs font-bold text-gray-800 mb-1">
+                  3. Where is the produce stored?
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-[11px] text-gray-500 font-medium">State</span>
+                    <input
+                      type="text"
+                      required
+                      value={formData.state}
+                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                      className="w-full mt-1 rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#15803d] focus:outline-none"
+                      placeholder="e.g. Kebbi"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-gray-500 font-medium">Town or Warehouse</span>
+                    <input
+                      type="text"
+                      required
+                      value={formData.facilityName}
+                      onChange={(e) => setFormData({ ...formData, facilityName: e.target.value })}
+                      className="w-full mt-1 rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#15803d] focus:outline-none"
+                      placeholder="e.g. Argungu Central Depot"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Target Asking Price (₦ / MT)
+                <label className="block text-xs font-bold text-gray-800 mb-1">
+                  Your Asking Price (₦ per Tonne)
                 </label>
                 <input
                   type="number"
                   required
                   value={formData.askingPrice}
                   onChange={(e) => setFormData({ ...formData, askingPrice: Number(e.target.value) })}
-                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs font-bold tabular-nums focus:border-[#143d2b] focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 p-2.5 text-sm font-extrabold tabular-nums focus:border-[#15803d] focus:outline-none"
+                  placeholder="e.g. 700000"
                 />
               </div>
 
-              <div className="pt-3 border-t border-gray-200 flex justify-end gap-2">
+              <div className="pt-3 border-t border-gray-200 flex justify-end gap-2.5">
                 <Button
                   type="button"
                   variant="secondary"
                   size="sm"
-                  onClick={() => setDrawerOpen(false)}
+                  onClick={() => setModalOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" size="sm">
-                  Confirm & Allocate Batch
+                <Button type="submit" size="sm" className="bg-[#15803d] hover:bg-[#166534]">
+                  Confirm & Put on Sale
                 </Button>
               </div>
             </form>

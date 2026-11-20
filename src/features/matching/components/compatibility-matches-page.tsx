@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import {
   CheckCircle2,
-  ArrowRight,
   Sparkles,
-  Building2,
   Package,
+  Building2,
+  MessageSquare,
 } from 'lucide-react'
 import { MatchScorePill } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,259 +14,172 @@ import type { CompatibilityMatch } from '@/types/matching'
 
 export function CompatibilityMatchesPage() {
   const [matches] = useState<CompatibilityMatch[]>(COMPATIBILITY_MATCHES)
-  const [selectedMatch, setSelectedMatch] = useState<CompatibilityMatch | null>(matches[0])
+  const [selectedMatch, setSelectedMatch] = useState<CompatibilityMatch>(matches[0])
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#e5e7eb] shadow-xs">
+      {/* Top Banner */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#143d2b]">
-              Algorithmic Compatibility Matches
+            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">
+              Recommended Buyer Matches
             </h1>
-            <span className="rounded bg-[#c0edd2] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#002113]">
-              Deterministic Rule Engine
+            <span className="rounded-full bg-[#dcfce7] px-2.5 py-0.5 text-xs font-bold text-[#15803d]">
+              {matches.length} Verified Matches
             </span>
           </div>
           <p className="mt-1 text-xs sm:text-sm text-gray-600">
-            Multi-factor evaluation pairing physical harvest batches with commercial tenders based on crop specifications, moisture limits, logistics distance, and volume feasibility.
+            We pair your stored crops with buyers whose factory demands match your grain type, moisture, and location.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200">
+        <div className="flex items-center gap-2 text-xs font-bold text-[#15803d] bg-[#f0fdf4] px-3.5 py-2 rounded-xl border border-[#bbf7d0]">
           <Sparkles className="h-4 w-4" />
-          <span>Non-binding algorithmic recommendations</span>
+          <span>Automatic matchmaking active</span>
         </div>
       </div>
 
-      {/* Main Grid: Matches List and Detail Comparison Panel */}
+      {/* Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Matches List (5 Cols) */}
+        {/* Match Cards List (5 Cols) */}
         <div className="lg:col-span-5 space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-              High-Compatibility Pairs ({matches.length})
-            </span>
-            <span className="text-[11px] text-gray-400">Ranked by overall match</span>
-          </div>
+          <p className="text-xs font-bold text-gray-500 uppercase px-1">
+            Tap a match to see deal details:
+          </p>
 
           {matches.map((m) => {
-            const isSelected = selectedMatch?.id === m.id
+            const isSelected = selectedMatch.id === m.id
             return (
               <div
                 key={m.id}
                 onClick={() => setSelectedMatch(m)}
                 className={`cursor-pointer rounded-2xl border p-4 transition-all shadow-xs ${
                   isSelected
-                    ? 'border-[#143d2b] bg-white ring-2 ring-[#143d2b]/10'
+                    ? 'border-[#15803d] bg-[#f0fdf4] ring-2 ring-[#15803d]/20'
                     : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  <span className="font-extrabold text-[#15803d] text-xs">
                     {m.supplyBatch.commodityName}
                   </span>
                   <MatchScorePill score={m.overallScore} />
                 </div>
 
                 <div className="text-sm font-extrabold text-gray-900">
-                  {m.supplyBatch.organizationName}
-                  <span className="text-gray-400 font-normal mx-1.5">⇄</span>
                   {m.demandTender.organizationName}
                 </div>
 
-                <div className="mt-2 flex items-center gap-2 text-xs text-gray-600">
-                  <span className="font-bold text-[#143d2b] tabular-nums">
-                    {m.breakdown.volumeFulfillableMT} MT fulfillable
-                  </span>
-                  <span>•</span>
-                  <span>{m.breakdown.distanceKm} km transit</span>
-                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  They need <strong>{m.demandTender.requiredQuantityMT} Tonnes</strong> in{' '}
+                  {m.demandTender.deliveryLocation.state} State
+                </p>
 
-                <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px]">
-                  <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Moisture & Grade Compliant
+                <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-xs">
+                  <span className="text-[#15803d] font-bold">
+                    You can supply {m.breakdown.volumeFulfillableMT} Tonnes
                   </span>
-                  <span className="font-bold text-gray-500">
-                    {m.breakdown.volumePercentage.toFixed(0)}% of tender
-                  </span>
+                  <span className="text-gray-400 font-semibold">{m.breakdown.distanceKm} km route</span>
                 </div>
               </div>
             )
           })}
         </div>
 
-        {/* Selected Match Comprehensive Evaluation (7 Cols) */}
-        {selectedMatch && (
-          <div className="lg:col-span-7 rounded-2xl border border-[#e5e7eb] bg-white p-6 shadow-xs">
-            <div className="flex items-start justify-between border-b border-gray-100 pb-4 mb-5">
-              <div>
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  Compatibility Diagnostic Dossier
-                </span>
-                <h2 className="text-xl font-extrabold text-gray-900 mt-1">
-                  {selectedMatch.supplyBatch.commodityName} Pairing
-                </h2>
-              </div>
-              <div className="text-right">
-                <MatchScorePill score={selectedMatch.overallScore} />
-                <p className="text-[11px] text-gray-400 mt-1">Calculated via deterministic engine</p>
-              </div>
-            </div>
-
-            {/* Side-by-Side Factor Comparison */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              {/* Supply Side */}
-              <div className="p-4 rounded-xl bg-[#f8f9fa] border border-gray-200">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#143d2b] uppercase tracking-wider mb-2">
-                  <Package className="h-4 w-4" />
-                  <span>Physical Supply Batch</span>
-                </div>
-                <p className="font-extrabold text-gray-900 text-sm">
-                  {selectedMatch.supplyBatch.batchCode}
-                </p>
-                <p className="text-xs text-gray-600 mt-0.5">
-                  {selectedMatch.supplyBatch.organizationName}
-                </p>
-
-                <div className="mt-3 space-y-1.5 text-xs text-gray-700 border-t border-gray-200 pt-2.5">
-                  <div>
-                    <span className="text-gray-500">Available: </span>
-                    <span className="font-bold tabular-nums">
-                      {selectedMatch.supplyBatch.metricTonnes} MT ({selectedMatch.supplyBatch.quantity} {selectedMatch.supplyBatch.unit})
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Moisture: </span>
-                    <span className="font-bold text-emerald-800">
-                      {selectedMatch.supplyBatch.moistureContent}% MC
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Location: </span>
-                    <span>
-                      {selectedMatch.supplyBatch.location.facilityName}, {selectedMatch.supplyBatch.location.state}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Demand Side */}
-              <div className="p-4 rounded-xl bg-[#f1f3ff] border border-[#dce2f7]">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#00195d] uppercase tracking-wider mb-2">
-                  <Building2 className="h-4 w-4" />
-                  <span>Procurement Tender</span>
-                </div>
-                <p className="font-extrabold text-gray-900 text-sm">
-                  {selectedMatch.demandTender.tenderCode}
-                </p>
-                <p className="text-xs text-gray-600 mt-0.5">
-                  {selectedMatch.demandTender.organizationName}
-                </p>
-
-                <div className="mt-3 space-y-1.5 text-xs text-gray-700 border-t border-[#dce2f7] pt-2.5">
-                  <div>
-                    <span className="text-gray-500">Required: </span>
-                    <span className="font-bold tabular-nums">
-                      {selectedMatch.demandTender.requiredQuantityMT} MT
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Accepted Max MC: </span>
-                    <span className="font-bold text-gray-900">
-                      &lt;= {selectedMatch.demandTender.acceptedMoistureMax}% MC
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Intake Gate: </span>
-                    <span>
-                      {selectedMatch.demandTender.deliveryLocation.receivingHub}, {selectedMatch.demandTender.deliveryLocation.state}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Score Factor Breakdown Progress Bars */}
-            <div className="space-y-3 mb-6 bg-[#f8f9fa] p-4 rounded-xl border border-gray-200">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">
-                Evaluation Factor Matrix
-              </h3>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span className="text-gray-600">Commodity & Variety Compatibility</span>
-                  <span className="text-emerald-800 font-bold">100% Fit</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-emerald-600 h-2 rounded-full w-full" />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span className="text-gray-600">Moisture & Quality Compliance</span>
-                  <span className="text-emerald-800 font-bold">
-                    Passed (12.8% vs 13.5% Max)
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-emerald-600 h-2 rounded-full w-full" />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span className="text-gray-600">
-                    Logistics Corridor ({selectedMatch.breakdown.distanceKm} km transit distance)
-                  </span>
-                  <span className="text-gray-800 font-bold">
-                    {selectedMatch.breakdown.locationScore}% Proximity
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-[#143d2b] h-2 rounded-full"
-                    style={{ width: `${selectedMatch.breakdown.locationScore}%` }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span className="text-gray-600">
-                    Volume Capacity ({selectedMatch.breakdown.volumeFulfillableMT} MT of {selectedMatch.demandTender.requiredQuantityMT} MT)
-                  </span>
-                  <span className="text-gray-800 font-bold">
-                    {selectedMatch.breakdown.volumePercentage.toFixed(1)}% Fulfillable
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-amber-600 h-2 rounded-full"
-                    style={{ width: `${Math.min(100, selectedMatch.breakdown.volumePercentage)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Direct Bilateral Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100">
-              <span className="text-xs text-gray-500">
-                Action will open a bilateral negotiation channel in the Coordination Desk.
+        {/* Selected Match Details & Comparison (7 Cols) */}
+        <div className="lg:col-span-7 rounded-2xl border border-gray-200 bg-white p-6 shadow-xs">
+          <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-5">
+            <div>
+              <span className="text-[11px] font-bold text-gray-500 uppercase">
+                Deal Match Comparison
               </span>
-              <div className="flex gap-2.5 w-full sm:w-auto">
-                <Link to="/inquiries" className="w-full sm:w-auto">
-                  <Button fullWidth icon={<ArrowRight className="h-4 w-4" />}>
-                    Initiate Desk Inquiry
-                  </Button>
-                </Link>
+              <h2 className="text-xl font-extrabold text-gray-900 mt-0.5">
+                {selectedMatch.supplyBatch.commodityName}
+              </h2>
+            </div>
+            <MatchScorePill score={selectedMatch.overallScore} />
+          </div>
+
+          {/* Simple Side-by-Side Comparison */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            {/* What you have */}
+            <div className="p-4 rounded-xl bg-[#f8faf7] border border-gray-200">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[#15803d] uppercase mb-2">
+                <Package className="h-4 w-4" />
+                <span>What You Have</span>
+              </div>
+              <p className="font-extrabold text-gray-900 text-sm">
+                {selectedMatch.supplyBatch.metricTonnes} Tonnes ({selectedMatch.supplyBatch.quantity} {selectedMatch.supplyBatch.unit})
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                Variety: {selectedMatch.supplyBatch.variety}
+              </p>
+              <div className="mt-3 space-y-1 text-xs text-gray-600 pt-2 border-t border-gray-200">
+                <p>📍 Location: {selectedMatch.supplyBatch.location.state} State</p>
+                <p>💧 Moisture: {selectedMatch.supplyBatch.moistureContent}% (Safe & dry)</p>
+              </div>
+            </div>
+
+            {/* What buyer wants */}
+            <div className="p-4 rounded-xl bg-[#fef3c7]/40 border border-[#fde68a]">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[#b45309] uppercase mb-2">
+                <Building2 className="h-4 w-4" />
+                <span>What Buyer Wants</span>
+              </div>
+              <p className="font-extrabold text-gray-900 text-sm">
+                {selectedMatch.demandTender.requiredQuantityMT} Tonnes Needed
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                Buyer: {selectedMatch.demandTender.organizationName}
+              </p>
+              <div className="mt-3 space-y-1 text-xs text-gray-600 pt-2 border-t border-[#fde68a]">
+                <p>📍 Receiving: {selectedMatch.demandTender.deliveryLocation.receivingHub}, {selectedMatch.demandTender.deliveryLocation.state}</p>
+                <p>💰 Budget: ₦{(selectedMatch.demandTender.targetPricePerMT || 0).toLocaleString()} / Tonne</p>
               </div>
             </div>
           </div>
-        )}
+
+          {/* Clear checklist of why it's a match */}
+          <div className="mb-6 p-4 rounded-xl bg-white border border-gray-200 space-y-2.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800">
+              Why this is a great deal:
+            </h3>
+
+            <div className="flex items-center gap-2.5 text-xs text-gray-700">
+              <CheckCircle2 className="h-4 w-4 text-[#15803d] shrink-0" />
+              <span>
+                <strong>Crop is 100% identical:</strong> Both parties specified {selectedMatch.supplyBatch.variety}.
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5 text-xs text-gray-700">
+              <CheckCircle2 className="h-4 w-4 text-[#15803d] shrink-0" />
+              <span>
+                <strong>Moisture is approved:</strong> Your {selectedMatch.supplyBatch.moistureContent}% is below the buyer's maximum ceiling of {selectedMatch.demandTender.acceptedMoistureMax}%.
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5 text-xs text-gray-700">
+              <CheckCircle2 className="h-4 w-4 text-[#15803d] shrink-0" />
+              <span>
+                <strong>Direct transport corridor:</strong> {selectedMatch.breakdown.distanceKm} km transit between warehouses.
+              </span>
+            </div>
+          </div>
+
+          {/* Clear Action Button */}
+          <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <span className="text-xs text-gray-500">
+              Ready to talk? Start a direct chat to agree on quantity and price.
+            </span>
+            <Link to="/inquiries" className="w-full sm:w-auto">
+              <Button fullWidth icon={<MessageSquare className="h-4 w-4" />}>
+                Message {selectedMatch.demandTender.organizationName}
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )

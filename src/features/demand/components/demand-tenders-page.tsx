@@ -3,66 +3,56 @@ import {
   Plus,
   MapPin,
   Calendar,
-  Droplets,
-  Scale,
-  Search,
   X,
-  ArrowRight,
+  MessageSquare,
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DEMAND_TENDERS, COMMODITIES } from '@/data/mock-data'
+import { Link } from 'react-router-dom'
 import type { DemandTender } from '@/types/demand'
 
 export function DemandTendersPage() {
   const [tenders, setTenders] = useState<DemandTender[]>(DEMAND_TENDERS)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [selectedCropFilter, setSelectedCropFilter] = useState('All')
+  const [modalOpen, setModalOpen] = useState(false)
 
-  // New tender form
+  // New buyer request form
   const [newTender, setNewTender] = useState({
-    buyerName: 'Alhaji Sani Bello',
     organizationName: 'Premier Rice Processors Ltd',
-    organizationType: 'Industrial Processor' as const,
     commodityId: 'faro-44-rice',
-    requiredQuantityMT: 150,
+    requiredQuantityMT: 100,
     acceptedMoistureMax: 13.0,
-    gradeRequirement: 'Grade 1 (Premium Milling)',
     state: 'Kano',
-    lga: 'Bompai',
-    receivingHub: 'Bompai Silo Complex',
-    targetDeliveryDate: '2026-12-15',
-    targetPricePerMT: 720000,
+    receivingHub: 'Bompai Factory Mill',
+    targetDeliveryDate: '2026-12-10',
+    targetPricePerMT: 710000,
   })
 
-  const selectedCrop = COMMODITIES.find((c) => c.id === newTender.commodityId)
+  const selectedCrop = COMMODITIES.find((c) => c.id === newTender.commodityId) || COMMODITIES[0]
 
   const filteredTenders = tenders.filter((t) => {
-    const q = searchTerm.toLowerCase()
-    return (
-      t.commodityName.toLowerCase().includes(q) ||
-      t.organizationName.toLowerCase().includes(q) ||
-      t.deliveryLocation.state.toLowerCase().includes(q)
-    )
+    if (selectedCropFilter === 'All') return true
+    return t.commodityName.toLowerCase().includes(selectedCropFilter.toLowerCase())
   })
 
   const handleCreateTender = (e: React.FormEvent) => {
     e.preventDefault()
     const tender: DemandTender = {
       id: `dt-${Date.now()}`,
-      tenderCode: `TND-${selectedCrop?.code || 'CRP'}-2026-${Math.floor(100 + Math.random() * 900)}`,
-      buyerName: newTender.buyerName,
+      tenderCode: `TND-${selectedCrop.code}-2026-${Math.floor(100 + Math.random() * 900)}`,
+      buyerName: 'Procurement Officer',
       organizationName: newTender.organizationName,
-      organizationType: newTender.organizationType,
+      organizationType: 'Industrial Processor',
       commodityId: newTender.commodityId,
-      commodityName: selectedCrop?.name || 'Produce',
-      varietyPreferences: selectedCrop?.varieties || [],
+      commodityName: selectedCrop.name,
+      varietyPreferences: selectedCrop.varieties,
       requiredQuantityMT: Number(newTender.requiredQuantityMT),
       acceptedMoistureMax: Number(newTender.acceptedMoistureMax),
-      gradeRequirement: newTender.gradeRequirement,
+      gradeRequirement: 'Standard Industrial Quality',
       deliveryLocation: {
         state: newTender.state,
-        lga: newTender.lga,
+        lga: 'Industrial Hub',
         receivingHub: newTender.receivingHub,
       },
       targetDeliveryDate: newTender.targetDeliveryDate,
@@ -72,162 +62,141 @@ export function DemandTendersPage() {
     }
 
     setTenders([tender, ...tenders])
-    setDrawerOpen(false)
+    setModalOpen(false)
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#e5e7eb] shadow-xs">
+      {/* Top Banner */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#143d2b]">
-              Procurement Demand & Buyer Tenders
+            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">
+              Buyer Requests (Demand)
             </h1>
-            <span className="rounded bg-[#ffdbca] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#331200]">
-              Commercial Sourcing
+            <span className="rounded-full bg-[#fef3c7] px-2.5 py-0.5 text-xs font-bold text-[#b45309]">
+              {filteredTenders.length} Active Orders
             </span>
           </div>
           <p className="mt-1 text-xs sm:text-sm text-gray-600">
-            Publish forward procurement requirements, intake specifications, and contract delivery schedules for agricultural processors and institutional buyers.
+            Real purchase requests from verified flour mills, rice parboilers, and food companies looking for crops to buy.
           </p>
         </div>
 
         <Button
-          onClick={() => setDrawerOpen(true)}
-          icon={<Plus className="h-4 w-4" />}
-          size="sm"
+          onClick={() => setModalOpen(true)}
+          icon={<Plus className="h-5 w-5" />}
+          size="md"
+          variant="amber"
         >
-          Publish Procurement Tender
+          + Post What You Want to Buy
         </Button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search tender by crop, buyer, state..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-300 bg-white focus:outline-none focus:border-[#143d2b] focus:ring-1 focus:ring-[#143d2b]"
-          />
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500 font-semibold">
-          <span>{filteredTenders.length} active procurement requests</span>
-        </div>
+      {/* Simple Crop Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+        {['All', 'Rice', 'Maize', 'Cassava', 'Soybeans'].map((crop) => (
+          <button
+            key={crop}
+            onClick={() => setSelectedCropFilter(crop)}
+            className={`rounded-full px-4 py-2 text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              selectedCropFilter === crop
+                ? 'bg-[#15803d] text-white shadow-xs'
+                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {crop === 'All' ? 'All Crop Requests' : `${crop} Orders`}
+          </button>
+        ))}
       </div>
 
-      {/* Tenders Grid */}
+      {/* Buyer Request Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredTenders.map((tender) => (
           <div
             key={tender.id}
-            className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-xs hover:border-[#143d2b] transition-all"
+            className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-xs hover:border-[#15803d] transition-all"
           >
             <div>
               {/* Header */}
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  {tender.tenderCode}
-                </span>
-                <StatusBadge status="verified" label="OPEN TENDER" />
+                <span className="text-[11px] font-bold text-gray-500 uppercase">{tender.tenderCode}</span>
+                <StatusBadge status="open" label="Open Order" />
               </div>
 
-              {/* Organization and Title */}
+              {/* Buyer Name & Type */}
               <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
                 {tender.organizationName}
               </h2>
               <p className="text-xs text-gray-500 font-medium">{tender.organizationType}</p>
 
-              {/* Required Commodity & Quantity Banner */}
-              <div className="my-3 p-3 rounded-xl bg-[#f8f9fa] border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-500 uppercase">
-                      Target Commodity
-                    </span>
-                    <p className="font-extrabold text-gray-900 text-sm mt-0.5">
-                      {tender.commodityName}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-bold text-emerald-800 uppercase">
-                      Required Volume
-                    </span>
-                    <p className="text-lg font-extrabold text-[#143d2b] tabular-nums mt-0.5">
-                      {tender.requiredQuantityMT} MT
-                    </p>
-                  </div>
+              {/* Quantity Block */}
+              <div className="my-3 p-3.5 rounded-xl bg-[#f8faf7] border border-gray-200 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">Crop Wanted</span>
+                  <p className="text-sm font-extrabold text-[#15803d] mt-0.5">{tender.commodityName}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">Quantity</span>
+                  <p className="text-lg font-extrabold text-gray-900 tabular-nums mt-0.5">
+                    {tender.requiredQuantityMT} Tonnes
+                  </p>
                 </div>
               </div>
 
-              {/* Specs & Intake Tolerances */}
-              <div className="space-y-2 text-xs text-gray-600 border-t border-b border-gray-100 py-3">
-                <div className="flex items-center gap-2">
-                  <Droplets className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                  <span className="text-gray-500 font-medium">Max Moisture:</span>
-                  <span className="font-bold text-gray-900 tabular-nums">
-                    &lt;= {tender.acceptedMoistureMax}% MC
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Scale className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                  <span className="text-gray-500 font-medium">Quality Grade:</span>
-                  <span className="font-semibold text-gray-800">{tender.gradeRequirement}</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                  <span className="text-gray-500 font-medium">Target Delivery:</span>
-                  <span className="font-bold text-gray-900">{tender.targetDeliveryDate}</span>
-                </div>
-
+              {/* Delivery Details */}
+              <div className="space-y-1.5 text-xs text-gray-600 border-t border-gray-100 pt-3">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                  <span className="text-gray-700 truncate">
-                    {tender.deliveryLocation.receivingHub}, {tender.deliveryLocation.state}
+                  <span className="font-semibold text-gray-800">
+                    Deliver to: {tender.deliveryLocation.receivingHub}, {tender.deliveryLocation.state}
                   </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                  <span>Needed by: {tender.targetDeliveryDate}</span>
+                </div>
+                <div className="text-[11px] text-gray-500 pt-1">
+                  Dryness required: maximum {tender.acceptedMoistureMax}% moisture
                 </div>
               </div>
             </div>
 
             {/* Bottom Actions */}
-            <div className="mt-4 pt-3 flex items-center justify-between border-t border-gray-100">
+            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
               <div>
-                <span className="text-[10px] text-gray-400 font-bold uppercase">Budget Quote</span>
-                <p className="text-sm font-extrabold text-gray-900 tabular-nums">
-                  ₦{(tender.targetPricePerMT || 0).toLocaleString()} / MT
+                <span className="text-[10px] uppercase font-bold text-gray-400">Budget Price</span>
+                <p className="text-sm font-extrabold text-[#15803d] tabular-nums">
+                  ₦{(tender.targetPricePerMT || 0).toLocaleString()} / Tonne
                 </p>
               </div>
 
-              <Button size="sm" icon={<ArrowRight className="h-3.5 w-3.5" />} className="text-xs">
-                Submit Lot
-              </Button>
+              <Link to="/inquiries">
+                <Button size="sm" icon={<MessageSquare className="h-4 w-4" />}>
+                  I Have This
+                </Button>
+              </Link>
             </div>
           </div>
         ))}
       </div>
 
-      {/* New Procurement Tender Modal */}
-      {drawerOpen && (
+      {/* Post Buyer Request Modal */}
+      {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-gray-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
               <div>
                 <h3 className="text-lg font-extrabold text-gray-900">
-                  Publish Procurement Tender
+                  Post What You Want to Buy
                 </h3>
                 <p className="text-xs text-gray-500">
-                  Post institutional raw material requirements for cluster sourcing
+                  Suppliers and farmer cooperatives will contact you with matching crops
                 </p>
               </div>
               <button
-                onClick={() => setDrawerOpen(false)}
-                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"
+                onClick={() => setModalOpen(false)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -235,8 +204,8 @@ export function DemandTendersPage() {
 
             <form onSubmit={handleCreateTender} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Procuring Organization
+                <label className="block text-xs font-bold text-gray-800 mb-1">
+                  Your Company or Cooperative Name
                 </label>
                 <input
                   type="text"
@@ -245,24 +214,25 @@ export function DemandTendersPage() {
                   onChange={(e) =>
                     setNewTender({ ...newTender, organizationName: e.target.value })
                   }
-                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs font-semibold focus:border-[#143d2b] focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs font-semibold focus:border-[#15803d] focus:outline-none"
+                  placeholder="e.g. Premier Rice Mills Ltd"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Target Commodity
+                <label className="block text-xs font-bold text-gray-800 mb-1">
+                  Which crop do you need?
                 </label>
                 <select
                   value={newTender.commodityId}
                   onChange={(e) =>
                     setNewTender({ ...newTender, commodityId: e.target.value })
                   }
-                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs font-semibold focus:border-[#143d2b] focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs font-bold focus:border-[#15803d] focus:outline-none"
                 >
                   {COMMODITIES.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.code})
+                      {c.name} ({c.category})
                     </option>
                   ))}
                 </select>
@@ -270,8 +240,8 @@ export function DemandTendersPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    Required Quantity (MT)
+                  <label className="block text-xs font-bold text-gray-800 mb-1">
+                    Quantity Needed (Tonnes)
                   </label>
                   <input
                     type="number"
@@ -281,30 +251,42 @@ export function DemandTendersPage() {
                     onChange={(e) =>
                       setNewTender({ ...newTender, requiredQuantityMT: Number(e.target.value) })
                     }
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs font-bold tabular-nums focus:border-[#143d2b] focus:outline-none"
+                    className="w-full rounded-xl border border-gray-300 p-2.5 text-sm font-extrabold tabular-nums focus:border-[#15803d] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    Max Moisture (%)
+                  <label className="block text-xs font-bold text-gray-800 mb-1">
+                    Your Budget (₦ / Tonne)
                   </label>
                   <input
                     type="number"
-                    step="0.1"
                     required
-                    value={newTender.acceptedMoistureMax}
+                    value={newTender.targetPricePerMT}
                     onChange={(e) =>
-                      setNewTender({ ...newTender, acceptedMoistureMax: Number(e.target.value) })
+                      setNewTender({ ...newTender, targetPricePerMT: Number(e.target.value) })
                     }
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs tabular-nums focus:border-[#143d2b] focus:outline-none"
+                    className="w-full rounded-xl border border-gray-300 p-2.5 text-sm font-extrabold tabular-nums focus:border-[#15803d] focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    Target Delivery Date
+                  <label className="block text-xs font-bold text-gray-800 mb-1">
+                    Delivery State
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newTender.state}
+                    onChange={(e) => setNewTender({ ...newTender, state: e.target.value })}
+                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#15803d] focus:outline-none"
+                    placeholder="e.g. Kano"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-800 mb-1">
+                    Needed by Date
                   </label>
                   <input
                     type="date"
@@ -313,62 +295,36 @@ export function DemandTendersPage() {
                     onChange={(e) =>
                       setNewTender({ ...newTender, targetDeliveryDate: e.target.value })
                     }
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#143d2b] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    Off-take State
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newTender.state}
-                    onChange={(e) => setNewTender({ ...newTender, state: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#143d2b] focus:outline-none"
+                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#15803d] focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Intake Facility / Receiving Gate
+                <label className="block text-xs font-bold text-gray-800 mb-1">
+                  Factory / Receiving Warehouse Address
                 </label>
                 <input
                   type="text"
                   required
                   value={newTender.receivingHub}
                   onChange={(e) => setNewTender({ ...newTender, receivingHub: e.target.value })}
-                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#143d2b] focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#15803d] focus:outline-none"
+                  placeholder="e.g. Bompai Mill Intake Gate"
                 />
               </div>
 
-              <div>
-                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Target Budget (₦ / MT)
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={newTender.targetPricePerMT}
-                  onChange={(e) =>
-                    setNewTender({ ...newTender, targetPricePerMT: Number(e.target.value) })
-                  }
-                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs font-bold tabular-nums focus:border-[#143d2b] focus:outline-none"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-gray-200 flex justify-end gap-2">
+              <div className="pt-3 border-t border-gray-200 flex justify-end gap-2.5">
                 <Button
                   type="button"
                   variant="secondary"
                   size="sm"
-                  onClick={() => setDrawerOpen(false)}
+                  onClick={() => setModalOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" size="sm">
-                  Publish Tender
+                <Button type="submit" size="sm" variant="amber">
+                  Publish Order
                 </Button>
               </div>
             </form>

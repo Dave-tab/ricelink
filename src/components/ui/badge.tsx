@@ -16,14 +16,15 @@ export function StatusBadge({ status, label, className = '' }: StatusBadgeProps)
     case 'verified':
     case 'approved':
     case 'active':
-      badgeClasses = 'bg-emerald-50 text-emerald-800 border-emerald-200'
+    case 'open':
+      badgeClasses = 'bg-[#dcfce7] text-[#15803d] border-[#bbf7d0]'
       Icon = CheckCircle2
       break
     case 'pending':
     case 'in_negotiation':
     case 'evaluating':
     case 'in_aggregation':
-      badgeClasses = 'bg-amber-50 text-amber-800 border-amber-200'
+      badgeClasses = 'bg-[#fef3c7] text-[#b45309] border-[#fde68a]'
       Icon = Clock
       break
     case 'logistics':
@@ -35,7 +36,7 @@ export function StatusBadge({ status, label, className = '' }: StatusBadgeProps)
     case 'inactive':
     case 'closed':
     case 'draft':
-      badgeClasses = 'bg-slate-100 text-slate-700 border-slate-200'
+      badgeClasses = 'bg-gray-100 text-gray-600 border-gray-200'
       Icon = Clock
       break
     case 'error':
@@ -46,7 +47,7 @@ export function StatusBadge({ status, label, className = '' }: StatusBadgeProps)
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badgeClasses} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${badgeClasses} ${className}`}
     >
       <Icon className="h-3.5 w-3.5 shrink-0" />
       <span>{label}</span>
@@ -71,22 +72,22 @@ export function CommodityMetricPill({
 }: CommodityMetricPillProps) {
   return (
     <div
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#f3f4f1] text-[#143d2b] text-xs font-semibold tabular-nums border border-[#e5e7eb] ${className}`}
+      className={`inline-flex flex-wrap items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#f0fdf4] text-[#15803d] text-xs font-bold tabular-nums border border-[#bbf7d0] ${className}`}
     >
-      <span className="font-bold">
+      <span className="text-gray-900 font-extrabold">
         {volume} {unit}
       </span>
       {spec && (
         <>
-          <span className="text-gray-400">•</span>
-          <span className="text-gray-700">{spec}</span>
+          <span className="text-gray-300">•</span>
+          <span className="text-gray-700 font-semibold">{spec}</span>
         </>
       )}
       {moisture !== undefined && (
         <>
-          <span className="text-gray-400">•</span>
-          <span className="text-amber-800 bg-amber-100/60 px-1.5 py-0.5 rounded text-[11px]">
-            {moisture}% MC
+          <span className="text-gray-300">•</span>
+          <span className="text-[#b45309] bg-[#fef3c7] px-2 py-0.5 rounded-md text-[11px] font-bold">
+            {moisture}% Dryness
           </span>
         </>
       )}
@@ -96,7 +97,7 @@ export function CommodityMetricPill({
 
 export function CategoryBadge({ category }: { category: string }) {
   return (
-    <span className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-[#e9edff] text-[#00195d]">
+    <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0]">
       {category}
     </span>
   )
@@ -107,14 +108,14 @@ export function MatchScorePill({ score }: { score: number }) {
   const isMed = score >= 75 && score < 90
 
   const colorClasses = isHigh
-    ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+    ? 'bg-[#dcfce7] text-[#15803d] border-[#bbf7d0]'
     : isMed
-    ? 'bg-amber-100 text-amber-900 border-amber-300'
-    : 'bg-slate-100 text-slate-800 border-slate-300'
+    ? 'bg-[#fef3c7] text-[#b45309] border-[#fde68a]'
+    : 'bg-gray-100 text-gray-700 border-gray-200'
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border tabular-nums ${colorClasses}`}
+      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold border tabular-nums ${colorClasses}`}
     >
       <span>{score}% Match</span>
     </span>
