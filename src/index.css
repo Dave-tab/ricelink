@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/* ===== RiceLink Agro-Logistics Coordination Design System ===== */
+@theme {
+  --color-primary: #002717;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #143d2b;
+  --color-on-primary-container: #7ea890;
+  --color-primary-fixed: #c0edd2;
+  --color-primary-fixed-dim: #a5d0b7;
+  --color-on-primary-fixed: #002113;
+  --color-on-primary-fixed-variant: #264e3b;
+
+  --color-secondary: #9b4500;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #fd8a42;
+  --color-on-secondary-container: #682c00;
+  --color-secondary-fixed: #ffdbca;
+  --color-secondary-fixed-dim: #ffb68e;
+
+  --color-tertiary: #00195d;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #002b8f;
+  --color-on-tertiary-container: #7f99ff;
+
+  --color-surface: #f9f9ff;
+  --color-surface-dim: #d3daef;
+  --color-surface-bright: #f9f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f3ff;
+  --color-surface-container: #e9edff;
+  --color-surface-container-high: #e1e8fd;
+  --color-surface-container-highest: #dce2f7;
+
+  --color-on-surface: #141b2b;
+  --color-on-surface-variant: #414943;
+  --color-outline: #717973;
+  --color-outline-variant: #c1c8c2;
+
+  --color-status-verified: #047857;
+  --color-status-verified-bg: #ecfdf5;
+  --color-status-pending: #b45309;
+  --color-status-pending-bg: #fffbeb;
+  --color-status-logistics: #1d4ed8;
+  --color-status-logistics-bg: #eff6ff;
+  --color-status-inactive: #64748b;
+  --color-status-inactive-bg: #f8fafc;
+
+  --font-headline: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ===== Base Styles ===== */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+  min-height: 100dvh;
+}
+
+/* Tabular figures for weights, counts, and prices */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hide scrollbars for clean operational lists */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
