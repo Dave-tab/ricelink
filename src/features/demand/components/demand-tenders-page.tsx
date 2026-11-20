@@ -7,6 +7,7 @@ import {
   X,
   MessageSquare,
   CheckCircle2,
+  Calculator,
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -20,24 +21,43 @@ export function DemandTendersPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [successNotice, setSuccessNotice] = useState<string | null>(null)
 
-  // New buyer request form
+  // Clean form state without hardcoded defaults
   const [newTender, setNewTender] = useState({
-    organizationName: 'Premier Rice Processors Ltd',
+    organizationName: '',
     commodityId: 'faro-44-rice',
-    requiredQuantityMT: 100,
-    acceptedMoistureMax: 13.0,
-    state: 'Kano',
-    receivingHub: 'Bompai Factory Mill',
-    targetDeliveryDate: '2026-12-10',
-    targetPricePerMT: 710000,
+    requiredQuantityMT: '' as number | string,
+    acceptedMoistureMax: '' as number | string,
+    state: '',
+    receivingHub: '',
+    targetDeliveryDate: '',
+    targetPricePerMT: '' as number | string,
   })
 
   const selectedCrop = COMMODITIES.find((c) => c.id === newTender.commodityId) || COMMODITIES[0]
+
+  // Live calculation of total tender budget
+  const numericQtyMT = Number(newTender.requiredQuantityMT) || 0
+  const numericPriceMT = Number(newTender.targetPricePerMT) || 0
+  const calculatedTotalBudget = numericQtyMT * numericPriceMT
 
   const filteredTenders = tenders.filter((t) => {
     if (selectedCropFilter === 'All') return true
     return t.commodityName.toLowerCase().includes(selectedCropFilter.toLowerCase())
   })
+
+  const handleOpenModal = () => {
+    setNewTender({
+      organizationName: '',
+      commodityId: 'faro-44-rice',
+      requiredQuantityMT: '',
+      acceptedMoistureMax: '',
+      state: '',
+      receivingHub: '',
+      targetDeliveryDate: '',
+      targetPricePerMT: '',
+    })
+    setModalOpen(true)
+  }
 
   const handleCreateTender = (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,23 +65,23 @@ export function DemandTendersPage() {
       id: `dt-${Date.now()}`,
       tenderCode: `TND-${selectedCrop.code}-2026-${Math.floor(100 + Math.random() * 900)}`,
       buyerName: 'Procurement Officer',
-      organizationName: newTender.organizationName,
+      organizationName: newTender.organizationName || 'Commercial Buyer',
       organizationType: 'Industrial Processor',
       commodityId: newTender.commodityId,
       commodityName: selectedCrop.name,
       varietyPreferences: selectedCrop.varieties,
-      requiredQuantityMT: Number(newTender.requiredQuantityMT),
-      acceptedMoistureMax: Number(newTender.acceptedMoistureMax),
-      gradeRequirement: 'Standard Industrial Quality',
+      requiredQuantityMT: Number(newTender.requiredQuantityMT) || 10,
+      acceptedMoistureMax: Number(newTender.acceptedMoistureMax) || 14,
+      gradeRequirement: 'Standard Commercial Grade',
       deliveryLocation: {
-        state: newTender.state,
-        lga: 'Industrial Hub',
-        receivingHub: newTender.receivingHub,
+        state: newTender.state || 'Local State',
+        lga: 'Industrial Zone',
+        receivingHub: newTender.receivingHub || 'Factory Intake Gate',
       },
-      targetDeliveryDate: newTender.targetDeliveryDate,
+      targetDeliveryDate: newTender.targetDeliveryDate || new Date().toISOString().split('T')[0],
       status: 'open',
       postedDate: new Date().toISOString().split('T')[0],
-      targetPricePerMT: Number(newTender.targetPricePerMT),
+      targetPricePerMT: Number(newTender.targetPricePerMT) || 0,
     }
 
     setTenders([tender, ...tenders])
@@ -93,7 +113,7 @@ export function DemandTendersPage() {
         </div>
 
         <Button
-          onClick={() => setModalOpen(true)}
+          onClick={handleOpenModal}
           icon={<Plus className="h-5 w-5" />}
           size="md"
           variant="amber"
@@ -111,7 +131,7 @@ export function DemandTendersPage() {
           </div>
           <button
             onClick={() => setSuccessNotice(null)}
-            className="text-[#15803d] hover:text-[#166534] font-extrabold ml-3"
+            className="text-[#15803d] hover:text-[#166534] font-extrabold ml-3 cursor-pointer"
           >
             ✕
           </button>
@@ -218,7 +238,7 @@ export function DemandTendersPage() {
                   Post What You Want to Buy
                 </h3>
                 <p className="text-xs text-gray-500">
-                  Suppliers and farmer cooperatives will contact you with matching crops
+                  Type your procurement requirements — suppliers and co-ops will contact you
                 </p>
               </div>
               <button
@@ -242,7 +262,7 @@ export function DemandTendersPage() {
                     setNewTender({ ...newTender, organizationName: e.target.value })
                   }
                   className="w-full rounded-xl border border-gray-300 p-2.5 text-xs font-semibold focus:border-[#15803d] focus:outline-none"
-                  placeholder="e.g. Premier Rice Mills Ltd"
+                  placeholder="e.g. Premier Rice Mills Ltd / Northern Feed Co."
                 />
               </div>
 
@@ -276,11 +296,31 @@ export function DemandTendersPage() {
                     required
                     value={newTender.requiredQuantityMT}
                     onChange={(e) =>
-                      setNewTender({ ...newTender, requiredQuantityMT: Number(e.target.value) })
+                      setNewTender({ ...newTender, requiredQuantityMT: e.target.value })
                     }
                     className="w-full rounded-xl border border-gray-300 p-2.5 text-sm font-extrabold tabular-nums focus:border-[#15803d] focus:outline-none"
+                    placeholder="e.g. 100"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-800 mb-1">
+                    Max Moisture % (Dryness)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={newTender.acceptedMoistureMax}
+                    onChange={(e) =>
+                      setNewTender({ ...newTender, acceptedMoistureMax: e.target.value })
+                    }
+                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs tabular-nums focus:border-[#15803d] focus:outline-none"
+                    placeholder="e.g. 13.5 (Optional)"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-800 mb-1">
                     Your Budget (₦ / Tonne)
@@ -290,27 +330,13 @@ export function DemandTendersPage() {
                     required
                     value={newTender.targetPricePerMT}
                     onChange={(e) =>
-                      setNewTender({ ...newTender, targetPricePerMT: Number(e.target.value) })
+                      setNewTender({ ...newTender, targetPricePerMT: e.target.value })
                     }
                     className="w-full rounded-xl border border-gray-300 p-2.5 text-sm font-extrabold tabular-nums focus:border-[#15803d] focus:outline-none"
+                    placeholder="e.g. 710000"
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-800 mb-1">
-                    Delivery State
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newTender.state}
-                    onChange={(e) => setNewTender({ ...newTender, state: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#15803d] focus:outline-none"
-                    placeholder="e.g. Kano"
-                  />
-                </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-800 mb-1">
                     Needed by Date
@@ -327,18 +353,47 @@ export function DemandTendersPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-800 mb-1">
-                  Factory / Receiving Warehouse Address
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newTender.receivingHub}
-                  onChange={(e) => setNewTender({ ...newTender, receivingHub: e.target.value })}
-                  className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#15803d] focus:outline-none"
-                  placeholder="e.g. Bompai Mill Intake Gate"
-                />
+              {/* Dynamic Budget Calculation */}
+              {calculatedTotalBudget > 0 && (
+                <div className="p-3 rounded-xl bg-[#dcfce7] border border-[#bbf7d0] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 font-bold text-[#15803d]">
+                    <Calculator className="h-4 w-4" />
+                    <span>Estimated Total Order Value:</span>
+                  </div>
+                  <span className="font-extrabold text-[#15803d] text-sm tabular-nums">
+                    ₦{Math.round(calculatedTotalBudget).toLocaleString()}
+                  </span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-800 mb-1">
+                    Delivery State
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newTender.state}
+                    onChange={(e) => setNewTender({ ...newTender, state: e.target.value })}
+                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#15803d] focus:outline-none"
+                    placeholder="e.g. Kano, Oyo, Kaduna..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-800 mb-1">
+                    Factory / Receiving Intake Gate
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newTender.receivingHub}
+                    onChange={(e) => setNewTender({ ...newTender, receivingHub: e.target.value })}
+                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-[#15803d] focus:outline-none"
+                    placeholder="e.g. Bompai Mill Intake Gate 2"
+                  />
+                </div>
               </div>
 
               <div className="pt-3 border-t border-gray-200 flex justify-end gap-2.5">

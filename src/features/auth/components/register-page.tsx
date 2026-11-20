@@ -14,10 +14,10 @@ export function RegisterPage() {
   const navigate = useNavigate()
   const [role, setRole] = useState('producer')
   const [accountType, setAccountType] = useState<'individual' | 'organization'>('organization')
-  const [fullName, setFullName] = useState('Musa Abdullahi')
-  const [orgName, setOrgName] = useState('Argungu Rice Farmers Cooperative Union')
-  const [email, setEmail] = useState('musa.abdullahi@argungufarmers.ng')
-  const [password, setPassword] = useState('password123')
+  const [fullName, setFullName] = useState('')
+  const [orgName, setOrgName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {

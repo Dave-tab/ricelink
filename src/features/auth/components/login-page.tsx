@@ -5,8 +5,8 @@ import { ArrowRight } from 'lucide-react'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('musa.abdullahi@argungufarmers.ng')
-  const [password, setPassword] = useState('password123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showForgotNotice, setShowForgotNotice] = useState(false)
 
