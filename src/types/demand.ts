@@ -1,3 +1,4 @@
+
 export type DemandTenderStatus =
   | 'open'
   | 'evaluating'
@@ -8,20 +9,34 @@ export type DemandTenderStatus =
 export interface DemandTender {
   id: string
   tenderCode: string
+
   buyerName: string
   organizationName: string
-  organizationType: 'Industrial Processor' | 'Off-taker' | 'Institutional Buyer' | 'Aggregator'
-  commodityId: string
+  organizationType:
+    | 'Industrial Processor'
+    | 'Off-taker'
+    | 'Institutional Buyer'
+    | 'Aggregator'
+
+  // Catalogue reference is optional for custom crops.
+  commodityId?: string
   commodityName: string
-  varietyPreferences: string[]
+
+  // Buyers may specify a variety or leave it open.
+  varietyPreferences?: string[]
+
   requiredQuantityMT: number
-  acceptedMoistureMax: number
-  gradeRequirement: string
+
+  // Optional quality requirements.
+  acceptedMoistureMax?: number
+  gradeRequirement?: string
+
   deliveryLocation: {
     state: string
     lga: string
     receivingHub: string
   }
+
   targetDeliveryDate: string
   status: DemandTenderStatus
   postedDate: string

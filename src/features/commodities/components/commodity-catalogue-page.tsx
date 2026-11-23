@@ -1,252 +1,455 @@
+
 import { useState } from 'react'
 import {
-  Layers,
-  Scale,
+  CalendarDays,
   Droplets,
-  Calendar,
+  Info,
+  Layers,
   MapPin,
   Search,
-  BookOpen,
+  Scale,
+  Sprout,
+  X,
 } from 'lucide-react'
-import { CategoryBadge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { COMMODITIES } from '@/data/mock-data'
 import type { Commodity } from '@/types/commodity'
 
 export function CommodityCataloguePage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('All')
+  const [selectedCategory, setSelectedCategory] = useState('All')
   const [searchTerm, setSearchTerm] = useState('')
-  const [activeModalCommodity, setActiveModalCommodity] = useState<Commodity | null>(null)
+  const [activeCommodity, setActiveCommodity] = useState<Commodity | null>(null)
 
-  const categories = ['All', 'Grains', 'Legumes', 'Roots & Tubers', 'Cash Crops']
+  const categories = [
+    'All',
+    'Grains',
+    'Legumes',
+    'Roots & Tubers',
+    'Cash Crops',
+  ]
 
-  const filteredCommodities = COMMODITIES.filter((c) => {
-    const matchesCategory = selectedCategory === 'All' || c.category === selectedCategory
+  const filteredCommodities = COMMODITIES.filter((commodity) => {
+    const query = searchTerm.trim().toLowerCase()
+
+    const matchesCategory =
+      selectedCategory === 'All' ||
+      commodity.category === selectedCategory
+
     const matchesSearch =
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.description.toLowerCase().includes(searchTerm.toLowerCase())
+      !query ||
+      commodity.name.toLowerCase().includes(query) ||
+      commodity.code.toLowerCase().includes(query) ||
+      commodity.description.toLowerCase().includes(query) ||
+      commodity.varieties.some((variety) =>
+        variety.toLowerCase().includes(query),
+      )
+
     return matchesCategory && matchesSearch
   })
 
+  const closeModal = () => setActiveCommodity(null)
+
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">
-              Crops & Standards Guide
+      {/* Page heading */}
+      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs sm:p-7">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-2xl">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 text-green-700">
+                <Sprout size={18} />
+              </span>
+              <span className="text-xs font-bold uppercase tracking-wider text-green-700">
+                Commodity directory
+              </span>
+            </div>
+
+            <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">
+              Crops & Commodities
             </h1>
-            <span className="rounded-full bg-[#dcfce7] px-2.5 py-0.5 text-xs font-bold text-[#15803d]">
-              Approved Crops
-            </span>
+
+            <p className="mt-2 text-sm leading-relaxed text-gray-500">
+              Explore agricultural commodities, common varieties, growing
+              seasons, producing locations and indicative packaging references.
+            </p>
           </div>
-          <p className="mt-1 text-xs sm:text-sm text-gray-600">
-            Learn about accepted crops, standard bag weights in kilograms, and moisture dryness standards required by food factories.
+
+          <div className="flex shrink-0 items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100 text-green-700">
+              <Layers size={20} />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold tabular-nums text-gray-900">
+                {COMMODITIES.length}
+              </p>
+              <p className="text-xs font-medium text-gray-500">
+                Listed commodities
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* Search and filters */}
+      <section className="space-y-4">
+        <div className="relative w-full sm:max-w-md">
+          <Search
+            size={18}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search crops, codes or varieties..."
+            aria-label="Search commodities"
+            className="h-12 w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-4 focus:ring-green-600/10"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {categories.map((category) => {
+            const isActive = selectedCategory === category
+
+            return (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setSelectedCategory(category)}
+                aria-pressed={isActive}
+                className={`shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                  isActive
+                    ? 'border-green-700 bg-green-700 text-white'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-green-300 hover:bg-green-50 hover:text-green-800'
+                }`}
+              >
+                {category}
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* Results summary */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">
+            Explore commodities
+          </h2>
+          <p className="mt-0.5 text-xs text-gray-500">
+            Showing {filteredCommodities.length} of {COMMODITIES.length} commodities
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-bold text-[#15803d] bg-[#f0fdf4] px-3.5 py-2 rounded-xl border border-[#bbf7d0]">
-          <BookOpen className="h-4 w-4" />
-          <span>Official Nigerian Agricultural Standards</span>
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        {/* Category Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`rounded-full px-4 py-2 text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                selectedCategory === cat
-                  ? 'bg-[#15803d] text-white shadow-xs'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Search */}
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search crop name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-300 bg-white focus:outline-none focus:border-[#15803d] focus:ring-1 focus:ring-[#15803d]"
-          />
-        </div>
-      </div>
-
-      {/* Crop Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredCommodities.map((crop) => (
-          <div
-            key={crop.id}
-            className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-xs hover:border-[#15803d] transition-all"
+        {(searchTerm || selectedCategory !== 'All') && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchTerm('')
+              setSelectedCategory('All')
+            }}
+            className="text-xs font-semibold text-green-700 hover:text-green-800"
           >
-            <div>
-              {/* Header */}
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div>
-                  <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">
-                    {crop.code}
-                  </span>
-                  <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
-                    {crop.name}
-                  </h2>
-                </div>
-                <CategoryBadge category={crop.category} />
-              </div>
+            Clear filters
+          </button>
+        )}
+      </div>
 
-              {/* Friendly Description */}
-              <p className="text-xs text-gray-600 leading-relaxed mb-4">
-                {crop.description}
-              </p>
+      {/* Commodity cards */}
+      {filteredCommodities.length > 0 ? (
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {filteredCommodities.map((commodity) => {
+            const primaryUnit = commodity.standardUnits[0]
 
-              {/* Key Practical Standards */}
-              <div className="space-y-2 border-t border-b border-gray-100 py-3 text-xs">
-                {/* Standard Bag Size */}
-                <div className="flex items-center gap-2">
-                  <Scale className="h-3.5 w-3.5 text-[#15803d] shrink-0" />
-                  <span className="text-gray-500 font-semibold">Standard Bag:</span>
-                  <span className="font-extrabold text-gray-900">
-                    {crop.standardUnits[0].unit} ({crop.standardUnits[0].kgConversion} kg)
-                  </span>
-                </div>
+            return (
+              <article
+                key={commodity.id}
+                className="flex flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md"
+              >
+                <div className="flex-1">
+                  {/* Commodity identity */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                        {commodity.code}
+                      </p>
+                      <h3 className="mt-1 text-lg font-extrabold tracking-tight text-gray-900">
+                        {commodity.name}
+                      </h3>
+                    </div>
 
-                {/* Moisture / Dryness */}
-                {crop.maxMoistureContent && (
-                  <div className="flex items-center gap-2">
-                    <Droplets className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                    <span className="text-gray-500 font-semibold">Must be dry below:</span>
-                    <span className="font-extrabold text-gray-900 tabular-nums">
-                      {crop.maxMoistureContent}% Moisture
+                    <span className="shrink-0 rounded-full bg-green-50 px-3 py-1 text-[10px] font-bold text-green-800">
+                      {commodity.category}
                     </span>
                   </div>
-                )}
 
-                {/* Varieties */}
-                <div className="flex items-start gap-2">
-                  <Layers className="h-3.5 w-3.5 text-gray-400 shrink-0 mt-0.5" />
-                  <span className="text-gray-500 font-semibold shrink-0">Common Seeds:</span>
-                  <span className="text-gray-800 font-medium truncate">
-                    {crop.varieties.join(', ')}
-                  </span>
-                </div>
-
-                {/* Harvest Season */}
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5 text-[#d97706] shrink-0" />
-                  <span className="text-gray-500 font-semibold">Harvest Peak:</span>
-                  <span className="text-gray-800 font-medium truncate">
-                    {crop.seasonalPeak}
-                  </span>
-                </div>
-              </div>
-
-              {/* Market Activity */}
-              <div className="mt-3 grid grid-cols-2 gap-2 text-center bg-[#f8faf7] p-2.5 rounded-xl border border-gray-100">
-                <div>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Available Now</span>
-                  <p className="text-sm font-extrabold text-[#15803d] tabular-nums">
-                    {crop.activeSupplyMT.toLocaleString()} Tonnes
+                  <p className="mt-3 min-h-[48px] text-sm leading-relaxed text-gray-500">
+                    {commodity.description}
                   </p>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Buyers Want</span>
-                  <p className="text-sm font-extrabold text-[#d97706] tabular-nums">
-                    {crop.activeDemandMT.toLocaleString()} Tonnes
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            {/* Bottom Actions */}
-            <div className="mt-4 pt-3 flex items-center justify-between border-t border-gray-100">
-              <div className="flex items-center gap-1 text-[11px] text-gray-500">
-                <MapPin className="h-3.5 w-3.5 text-gray-400" />
-                <span className="truncate max-w-[130px]">
-                  {crop.primaryProducingStates.slice(0, 3).join(', ')}
-                </span>
-              </div>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setActiveModalCommodity(crop)}
-                className="text-xs"
-              >
-                Weight Table
-              </Button>
-            </div>
+                  {/* Commodity information */}
+                  <div className="my-4 space-y-3 border-y border-gray-100 py-4">
+                    {primaryUnit && (
+                      <div className="flex items-start gap-3">
+                        <Scale
+                          size={16}
+                          className="mt-0.5 shrink-0 text-green-700"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-gray-400">
+                            First listed packaging reference
+                          </p>
+                          <p className="text-xs font-bold text-gray-800">
+                            {primaryUnit.unit} · {primaryUnit.kgConversion} kg
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {commodity.maxMoistureContent != null && (
+                      <div className="flex items-start gap-3">
+                        <Droplets
+                          size={16}
+                          className="mt-0.5 shrink-0 text-blue-500"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-gray-400">
+                            Listed moisture reference
+                          </p>
+                          <p className="text-xs font-bold text-gray-800">
+                            {commodity.maxMoistureContent}%
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-start gap-3">
+                      <Layers
+                        size={16}
+                        className="mt-0.5 shrink-0 text-gray-400"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-gray-400">
+                          Common varieties
+                        </p>
+                        <p className="text-xs font-medium leading-relaxed text-gray-700">
+                          {commodity.varieties.join(', ')}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <CalendarDays
+                        size={16}
+                        className="mt-0.5 shrink-0 text-amber-600"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-gray-400">
+                          Seasonal peak
+                        </p>
+                        <p className="text-xs font-medium text-gray-700">
+                          {commodity.seasonalPeak}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Illustrative market figures */}
+                  <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                        Sample market figures
+                      </p>
+                      <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[9px] font-bold text-gray-600">
+                        Demo
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[10px] font-medium text-gray-500">
+                          Sample supply
+                        </p>
+                        <p className="mt-1 text-base font-extrabold tabular-nums text-green-700">
+                          {commodity.activeSupplyMT.toLocaleString()}
+                        </p>
+                        <p className="text-[10px] text-gray-400">
+                          Metric tonnes
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-medium text-gray-500">
+                          Sample demand
+                        </p>
+                        <p className="mt-1 text-base font-extrabold tabular-nums text-amber-600">
+                          {commodity.activeDemandMT.toLocaleString()}
+                        </p>
+                        <p className="text-[10px] text-gray-400">
+                          Metric tonnes
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Producing locations and action */}
+                <div className="mt-4 flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
+                  <div className="flex min-w-0 items-start gap-2">
+                    <MapPin
+                      size={15}
+                      className="mt-0.5 shrink-0 text-gray-400"
+                    />
+                    <p className="truncate text-[11px] text-gray-500">
+                      {commodity.primaryProducingStates.slice(0, 3).join(', ')}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveCommodity(commodity)}
+                    className="shrink-0 rounded-lg border border-green-200 px-3 py-2 text-xs font-bold text-green-700 transition hover:bg-green-50"
+                  >
+                    View weights
+                  </button>
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-5 py-14 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+            <Search size={22} />
           </div>
-        ))}
-      </div>
+          <h3 className="mt-4 text-base font-bold text-gray-900">
+            No commodities found
+          </h3>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-gray-500">
+            We couldn't find a commodity matching your search. Try another name,
+            variety or category.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchTerm('')
+              setSelectedCategory('All')
+            }}
+            className="mt-4 text-sm font-bold text-green-700 hover:text-green-800"
+          >
+            Reset filters
+          </button>
+        </div>
+      )}
 
-      {/* Bag-to-Tonne Conversion Modal */}
-      {activeModalCommodity && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-gray-200">
-            <div className="flex items-start justify-between mb-4 border-b border-gray-100 pb-3">
+      {/* Packaging conversion modal */}
+      {activeCommodity && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-950/60 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeModal()
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="conversion-title"
+            className="my-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+          >
+            <div className="flex items-start justify-between border-b border-gray-100 p-5 sm:p-6">
               <div>
-                <span className="text-xs font-bold text-gray-500 uppercase">
-                  Measurement Conversion Guide
-                </span>
-                <h3 className="text-xl font-extrabold text-gray-900 mt-0.5">
-                  {activeModalCommodity.name}
-                </h3>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-green-700">
+                  Packaging reference
+                </p>
+                <h2
+                  id="conversion-title"
+                  className="mt-1 text-xl font-extrabold text-gray-900"
+                >
+                  {activeCommodity.name}
+                </h2>
+                <p className="mt-1 text-xs text-gray-500">
+                  Indicative weight conversions
+                </p>
               </div>
+
               <button
-                onClick={() => setActiveModalCommodity(null)}
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+                type="button"
+                onClick={closeModal}
+                aria-label="Close conversion guide"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
               >
-                ✕
+                <X size={19} />
               </button>
             </div>
 
-            <p className="text-xs text-gray-600 mb-4 leading-relaxed">
-              Standard commercial weight conversions for buying and selling {activeModalCommodity.name} across Nigeria.
-            </p>
+            <div className="p-5 sm:p-6">
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 p-3">
+                <Info size={16} className="mt-0.5 shrink-0 text-amber-600" />
+                <p className="text-xs leading-relaxed text-amber-900">
+                  These are illustrative conversions based on the weights
+                  listed in the catalogue. Actual packaging weights should be
+                  confirmed with the supplier and buyer before an agreement.
+                </p>
+              </div>
 
-            <div className="rounded-xl border border-gray-200 overflow-hidden text-xs mb-5">
-              <table className="w-full text-left">
-                <thead className="bg-[#f0fdf4] text-[#15803d] font-bold border-b border-[#bbf7d0]">
-                  <tr>
-                    <th className="p-3">Packaging Type</th>
-                    <th className="p-3">Weight in Kg</th>
-                    <th className="p-3">How Many = 1 Tonne?</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 font-semibold text-gray-800">
-                  {activeModalCommodity.standardUnits.map((u) => {
-                    const bagsPerTonne = Math.round(1000 / u.kgConversion)
-                    return (
-                      <tr key={u.unit} className="hover:bg-gray-50">
-                        <td className="p-3 font-bold text-gray-900">{u.unit}</td>
-                        <td className="p-3 tabular-nums">{u.kgConversion} kg</td>
-                        <td className="p-3 font-bold text-[#15803d] tabular-nums">
-                          {bagsPerTonne} {u.unit}s = 1 Tonne (MT)
-                        </td>
+              {activeCommodity.standardUnits.length > 0 ? (
+                <div className="overflow-x-auto rounded-xl border border-gray-200">
+                  <table className="w-full min-w-[440px] text-left text-xs">
+                    <thead className="bg-gray-50 text-gray-500">
+                      <tr>
+                        <th className="p-3 font-bold">Packaging type</th>
+                        <th className="p-3 font-bold">Weight</th>
+                        <th className="p-3 font-bold">
+                          Approx. units per tonne
+                        </th>
                       </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
 
-            <div className="flex justify-end">
-              <Button size="sm" onClick={() => setActiveModalCommodity(null)}>
-                Close Guide
-              </Button>
+                    <tbody className="divide-y divide-gray-100">
+                      {activeCommodity.standardUnits.map((unit, index) => {
+                        const bagsPerTonne =
+                          unit.kgConversion > 0
+                            ? 1000 / unit.kgConversion
+                            : 0
+
+                        return (
+                          <tr key={`${unit.unit}-${index}`}>
+                            <td className="p-3 font-bold text-gray-900">
+                              {unit.unit}
+                            </td>
+                            <td className="p-3 tabular-nums text-gray-700">
+                              {unit.kgConversion.toLocaleString()} kg
+                            </td>
+                            <td className="p-3 font-bold tabular-nums text-green-700">
+                              {bagsPerTonne > 0
+                                ? bagsPerTonne.toLocaleString(undefined, {
+                                    maximumFractionDigits: 2,
+                                  })
+                                : '—'}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
+                  No packaging references have been added for this commodity.
+                </p>
+              )}
+
+              <div className="mt-5 flex justify-end">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="rounded-xl bg-green-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-green-800"
+                >
+                  Close guide
+                </button>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
       )}
     </div>

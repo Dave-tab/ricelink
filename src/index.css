@@ -1,33 +1,29 @@
+
 @import "tailwindcss";
 
-/* ===== RiceLink Approchable AgriTech Design System ===== */
+/* ===== RiceLink Approachable AgriTech Design System ===== */
 @theme {
-  /* Warm, welcoming Agricultural Leaf Green */
   --color-primary: #15803d;
   --color-primary-dark: #166534;
   --color-primary-light: #dcfce7;
   --color-primary-ultralight: #f0fdf4;
   --color-on-primary: #ffffff;
 
-  /* Harvest Gold & Amber (Grain & Produce) */
   --color-harvest: #d97706;
   --color-harvest-dark: #b45309;
   --color-harvest-light: #fef3c7;
   --color-harvest-ultralight: #fffbeb;
 
-  /* Natural Clean Canvas & Cards */
   --color-surface: #f8faf7;
   --color-surface-card: #ffffff;
   --color-surface-muted: #f1f5f1;
   --color-border: #e5e7eb;
   --color-border-subtle: #f3f4f6;
 
-  /* High-Contrast, Glare-Resistant Text */
   --color-text-main: #111827;
   --color-text-muted: #4b5563;
   --color-text-subtle: #9ca3af;
 
-  /* Simple Status Colors */
   --color-status-success: #15803d;
   --color-status-success-bg: #dcfce7;
   --color-status-warning: #b45309;
@@ -43,6 +39,7 @@
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -52,16 +49,153 @@ body {
   min-height: 100dvh;
 }
 
-/* Tabular figures for weights, counts, and prices */
+/* ===== Page Entrance Animation ===== */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main > * {
+  animation: page-enter 650ms ease-out both;
+}
+
+/* ===== Section Entrance Animation ===== */
+@keyframes section-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main section {
+  animation: section-enter 700ms ease-out both;
+}
+
+main section:nth-of-type(2) {
+  animation-delay: 100ms;
+}
+
+main section:nth-of-type(3) {
+  animation-delay: 180ms;
+}
+
+main section:nth-of-type(4) {
+  animation-delay: 260ms;
+}
+
+main section:nth-of-type(5) {
+  animation-delay: 340ms;
+}
+
+/* ===== Interactive Link Feedback ===== */
+main a {
+  transition:
+    color 200ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease;
+}
+
+/* ===== Tabular Figures ===== */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
 
-/* Hide scrollbars for clean lists */
+/* ===== Hide Scrollbars ===== */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ===== Accessibility: Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+
+
+/* ===== RiceLink Landing Page Animations ===== */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-gentle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[fade-up_650ms_ease-out_both\],
+  .animate-\[fade-up_750ms_ease-out_100ms_both\],
+  .animate-\[fade-up_750ms_ease-out_200ms_both\],
+  .animate-\[fade-up_750ms_ease-out_300ms_both\],
+  .animate-\[fade-up_750ms_ease-out_400ms_both\],
+  .animate-\[fade-up_900ms_ease-out_200ms_both\],
+  .animate-\[fade-up_700ms_ease-out_400ms_both\],
+  .animate-\[fade-up_650ms_ease-out_550ms_both\],
+  .animate-\[fade-up_700ms_ease-out_650ms_both\],
+  .animate-\[fade-up_700ms_ease-out_800ms_both\],
+  .animate-\[fade-up_700ms_ease-out_both\],
+  .animate-\[fade-up_500ms_ease-out_both\],
+  .animate-\[fade-up_700ms_ease-out_200ms_both\],
+  .animate-\[float-gentle_6s_ease-in-out_infinite\],
+  .animate-\[soft-pulse_7s_ease-in-out_infinite\],
+  .animate-\[soft-pulse_3s_ease-in-out_infinite\] {
+    animation: none !important;
+  }
 }

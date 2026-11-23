@@ -1,7 +1,8 @@
+
 import type { Commodity } from '@/types/commodity'
 import type { SupplyBatch } from '@/types/supply'
 import type { DemandTender } from '@/types/demand'
-import type { CompatibilityMatch } from '@/types/matching'
+import { generateCompatibilityMatches } from '@/lib/matching-engine'
 import type { InquiryThread } from '@/types/inquiry'
 
 export const COMMODITIES: Commodity[] = [
@@ -126,7 +127,7 @@ export const COMMODITIES: Commodity[] = [
     varieties: ['TGX 1448-2E', 'TGX 1951-3F', 'Samsoy 2'],
     standardUnits: [
       { unit: '100kg Bag', kgConversion: 100 },
-      { unit: 'Metric Tonne (MT)', kgConversion: 1000 },
+      { unit: 'Metric Tonne (MT)', kgConversion: 100 },
     ],
     maxMoistureContent: 11.0,
     grades: [
@@ -312,59 +313,11 @@ export const DEMAND_TENDERS: DemandTender[] = [
   },
 ]
 
-export const COMPATIBILITY_MATCHES: CompatibilityMatch[] = [
-  {
-    id: 'm-001',
-    supplyBatch: SUPPLY_BATCHES[0], // Argungu Rice (42.5 MT)
-    demandTender: DEMAND_TENDERS[0], // Premier Rice (100 MT)
-    overallScore: 94,
-    breakdown: {
-      commodityMatch: 100,
-      varietyMatch: true,
-      moistureCompliance: true, // 12.8% <= 13.5%
-      distanceKm: 310,
-      locationScore: 88,
-      volumeFulfillableMT: 42.5,
-      volumePercentage: 42.5, // 42.5 of 100 MT
-    },
-    status: 'recommended',
-    calculatedAt: '2026-11-20T08:30:00Z',
-  },
-  {
-    id: 'm-002',
-    supplyBatch: SUPPLY_BATCHES[1], // Kaduna Maize (120 MT)
-    demandTender: DEMAND_TENDERS[1], // Crown Flour (250 MT)
-    overallScore: 91,
-    breakdown: {
-      commodityMatch: 100,
-      varietyMatch: true,
-      moistureCompliance: true, // 11.9% <= 12.5%
-      distanceKm: 580,
-      locationScore: 82,
-      volumeFulfillableMT: 120.0,
-      volumePercentage: 48.0,
-    },
-    status: 'inquiry_sent',
-    calculatedAt: '2026-11-20T09:15:00Z',
-  },
-  {
-    id: 'm-003',
-    supplyBatch: SUPPLY_BATCHES[2], // Iseyin Cassava (65 MT)
-    demandTender: DEMAND_TENDERS[2], // Allied Starch (120 MT)
-    overallScore: 98,
-    breakdown: {
-      commodityMatch: 100,
-      varietyMatch: true,
-      moistureCompliance: true,
-      distanceKm: 42,
-      locationScore: 99,
-      volumeFulfillableMT: 65.0,
-      volumePercentage: 54.2,
-    },
-    status: 'recommended',
-    calculatedAt: '2026-11-20T10:00:00Z',
-  },
-]
+export const COMPATIBILITY_MATCHES = generateCompatibilityMatches(
+  SUPPLY_BATCHES,
+  DEMAND_TENDERS,
+)
+
 
 export const INQUIRY_THREADS: InquiryThread[] = [
   {
@@ -372,21 +325,51 @@ export const INQUIRY_THREADS: InquiryThread[] = [
     threadCode: 'INQ-RIC-2026-089',
     supplyBatchId: 'sb-001',
     demandTenderId: 'dt-001',
+
     counterpartyName: 'Alhaji Sani Bello',
     counterpartyOrg: 'Premier Rice Processors Ltd',
     counterpartyRole: 'Head of Procurement',
+
     commoditySummary: 'Faro 44 Paddy Rice',
     quantitySummary: '42.5 MT (850 bags)',
+
     currentMilestone: 'terms_proposed',
+    conversationStatus: 'negotiating',
     lastActivity: '12 mins ago',
     unreadCount: 1,
+
+    offers: [
+      {
+        id: 'offer-001',
+        offerNumber: 1,
+        proposedBy: 'Premier Rice Processors Ltd',
+        proposedByRole: 'Buyer',
+        createdAt: 'Today, 10:15 AM',
+        status: 'pending',
+        terms: {
+          commodityName: 'Faro 44 Paddy Rice',
+          variety: 'Faro 44 (Sipi)',
+          grade: 'Grade 1 (Premium Milling)',
+          quantity: 42.5,
+          quantityUnit: 'MT',
+          pricePerUnit: 700000,
+          currency: 'NGN',
+          deliveryLocation: 'Bompai Mill, Kano',
+          deliveryArrangement: 'Delivered by supplier',
+          qualityRequirements:
+            'Inspection upon weighbridge arrival. Moisture requirement to be confirmed between parties.',
+        },
+      },
+    ],
+
     messages: [
       {
         id: 'msg-1',
         senderName: 'Alhaji Sani Bello',
         senderRole: 'Buyer',
         timestamp: 'Today, 09:20 AM',
-        message: 'Hello Argungu Cooperative, we reviewed your lot LOT-RIC-2026-089 (42.5 MT). Can you confirm moisture is within 13.0% tested on calibrated Dickey-John meter?',
+        message:
+          'Hello Argungu Cooperative, we reviewed your lot LOT-RIC-2026-089 (42.5 MT). Can you confirm moisture is within 13.0% tested on calibrated Dickey-John meter?',
         type: 'chat',
       },
       {
@@ -394,7 +377,8 @@ export const INQUIRY_THREADS: InquiryThread[] = [
         senderName: 'Musa Abdullahi',
         senderRole: 'Aggregator (You)',
         timestamp: 'Today, 09:45 AM',
-        message: 'Yes Alhaji Sani, certified moisture test at Wurno shed clocked 12.8%. Laboratory cert is attached to the batch record. We can dispatch 2 flatbed trucks immediately.',
+        message:
+          'Yes Alhaji Sani, certified moisture test at Wurno shed clocked 12.8%. Laboratory cert is attached to the batch record. We can dispatch 2 flatbed trucks immediately.',
         type: 'chat',
       },
       {
@@ -402,8 +386,10 @@ export const INQUIRY_THREADS: InquiryThread[] = [
         senderName: 'Premier Rice Processors',
         senderRole: 'System',
         timestamp: 'Today, 10:15 AM',
-        message: 'Term Proposal: 42.5 MT @ ₦700,000/MT delivered Bompai Mill, Kano. Inspection upon weighbridge arrival.',
-        type: 'terms',
+        message:
+          'Term Proposal: 42.5 MT @ ₦700,000/MT delivered Bompai Mill, Kano. Inspection upon weighbridge arrival.',
+        type: 'offer',
+        offerId: 'offer-001',
       },
     ],
   },
@@ -412,21 +398,27 @@ export const INQUIRY_THREADS: InquiryThread[] = [
     threadCode: 'INQ-MZ-2026-114',
     supplyBatchId: 'sb-002',
     demandTenderId: 'dt-002',
+
     counterpartyName: 'Engr. Emeka Nwosu',
     counterpartyOrg: 'Crown Flour Mills & Feeds',
     counterpartyRole: 'Senior Grain Buyer',
+
     commoditySummary: 'Yellow Maize (QPM)',
     quantitySummary: '120 MT (1,200 bags)',
+
     currentMilestone: 'sample_tested',
+    conversationStatus: 'negotiating',
     lastActivity: '2 hours ago',
     unreadCount: 0,
+
     messages: [
       {
         id: 'msg-10',
         senderName: 'Northern Grains Aggregators',
         senderRole: 'Seller (You)',
         timestamp: 'Yesterday, 04:10 PM',
-        message: 'Inquiry initiated for Tender TND-CFM-2026-081. 120 MT ready in Kaduna warehouse.',
+        message:
+          'Inquiry initiated for Tender TND-CFM-2026-081. 120 MT ready in Kaduna warehouse.',
         type: 'chat',
       },
       {
@@ -434,7 +426,8 @@ export const INQUIRY_THREADS: InquiryThread[] = [
         senderName: 'Crown Flour Mills',
         senderRole: 'Buyer',
         timestamp: 'Today, 08:30 AM',
-        message: 'Sample test confirmed Aflatoxin < 8ppb. Proceeding with logistics quotation.',
+        message:
+          'Sample test confirmed Aflatoxin < 8ppb. Proceeding with logistics quotation.',
         type: 'milestone',
       },
     ],
